@@ -10,7 +10,7 @@ Here I use [Devenv](https://devenv.sh/getting-started/#initial-set-up) to manage
 I also use [Direnv](https://direnv.net/docs/hook.html) to automatically start up the env.
 The file `devenv.nix` contains the dependencies. The file `devenv.yaml`configures inputs and imports that means it tells us from where we get our imports.
 The files `devenv.lock` is created from the nix and yaml files. It pins the inputs making the environment reproducible.
-The `.envrc` file tells direnv it should actiate the env.
+The `.envrc` file tells direnv it should actviate the env.
 
 ## About HDF5
 
@@ -110,3 +110,57 @@ The `.envrc` file tells direnv it should actiate the env.
 - learn CI für C language
 - maybe make debug makefile
 - use valgrind especially when there is segfault
+
+### Tables
+
+- research what is HDF5 Table
+- find out which kind of objects are columns
+
+struct hdfio {
+    hid_t fd;
+    char mode;
+};
+
+struct *hdfio hdfio_init(char* fn, char mode. char **cols)
+{
+    struct hdfio *self;
+    self = malloc(sizeo(*self));
+    if (NULL == self)
+        goto eself;
+    self->mode = mode;
+    // copy self-> cols;
+    if ('w' == mode) {
+        self->fd = 
+        if (self->fd failed)
+            goto efd;
+    }
+
+    return self;
+efd:
+    free(self);
+eself:
+    return NULL;
+}
+
+void hdfio_free(struct hdfio *self)
+{
+    // hdf_close(fd);
+    // free cols
+    free(self);
+    self = NULL;
+}
+
+int hdfio_readarray(struct hdfio *self, int Ncols, double **df, int *nrow)
+{
+
+}
+
+void test()
+{
+    struct hdfio* dh = hdfio_init("test.hdf5", 'w');
+    if (NULL == dh)
+             goto edf;
+
+edf:
+    hdfio_free(dh);
+}
