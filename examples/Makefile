@@ -2,8 +2,8 @@
 # This is a makefile for example programs where each program just requires one c file to produce an executable
 # Source code is in SRC_DIR, temporary objects files are in OBJ_DIR and the executables are in BIN_DIR
 
-CC = h5cc
-CFLAGS = -g -Wall
+CC := h5cc
+CFLAGS := -g -Wall
 SRC_DIR := src
 OBJ_DIR := obj
 BIN_DIR := bin
@@ -25,6 +25,6 @@ $(BIN_DIR)/%: $(OBJ_DIR)/%.o
 	$(CC) $(CFLAGS) $< -o $@
 
 
-clean::
+clean:
 	find bin/ -type f -exec rm -f {} \;
 	find . -type f -iname 'file*.h5' -exec rm -f {} \;
