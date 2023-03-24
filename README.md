@@ -121,7 +121,7 @@ struct hdfio {
     char mode;
 };
 
-struct *hdfio hdfio_init(char* fn, char mode. char **cols)
+struct *hdfio hdfio_init(char* fn, char mode, char **cols)
 {
     struct hdfio *self;
     self = malloc(sizeo(*self));

@@ -11,7 +11,7 @@ INC_DIR := include
 
 
 names := $(shell find $(SRC_DIR) -type f -iname "example_*.c" -print | sed 's/\.c//g' | sed 's/src\///g')
-INC_OBJS := $(shell find $(INC_DIR) -type f \( -name "*.h" \) -print | sed 's/\.h/.o/g' | sed 's/$(INC_DIR)/$(OBJ_DIR)/g')
+INCLUDE := $(shell find $(INC_DIR) -type f \( -name "*.h" \) -print | sed 's/\.h/.o/g' | sed 's/$(INC_DIR)/$(OBJ_DIR)/g')
 #SRCS := $(patsubst %,$(SRC_DIR)/%.c,$(names))
 #OBJS := $(patsubst %,$(OBJ_DIR)/%.o,$(names))
 BINS := $(patsubst %,$(BIN_DIR)/%,$(names))
@@ -23,7 +23,7 @@ all : $(BINS)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) -I $(INC_DIR) -c $(CFLAGS) $< -o $@ 
 
-$(BIN_DIR)/%: $(OBJ_DIR)/%.o $(INC_OBJS)
+$(BIN_DIR)/%: $(OBJ_DIR)/%.o $(INCLUDE)
 	$(CC) $(CFLAGS) $^ -o $@
 
 

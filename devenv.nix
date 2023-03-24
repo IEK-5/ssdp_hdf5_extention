@@ -6,13 +6,13 @@
 
   # https://devenv.sh/packages/
   packages = [ 
-	pkgs.git
-	pkgs.llvm
-	pkgs.hdf5
-	pkgs.zlib
-	pkgs.hdfview
-  pkgs.clang-tools
-  pkgs.valgrind
+    pkgs.git
+    pkgs.llvm
+    pkgs.hdf5
+    pkgs.zlib
+    pkgs.hdfview
+    pkgs.clang-tools
+    pkgs.valgrind
   ];
 
   # https://devenv.sh/scripts/

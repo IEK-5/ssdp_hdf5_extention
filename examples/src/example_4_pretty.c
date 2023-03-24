@@ -1,3 +1,7 @@
+#include <H5Epublic.h>
+#include <H5Fpublic.h>
+#include <H5Ppublic.h>
+#include <H5public.h>
 #include <hdf5.h>
 #include <hdf5_hl.h>
 #include <stdio.h>
@@ -68,6 +72,7 @@
 */
 
 typedef enum {
+    CREATE,
     WRITE,
     READ,
 } IOMode;
@@ -83,11 +88,40 @@ struct H5FileIOHandler{
     hid_t file_id;
     char* filename;
     IOMode mode;
-    struct DatasetHandler* datasets;
+    arraylist* datasets;
 };
 
-struct H5FileIOHandler* H5FileIOHandler_init(char* fn, IOMode mode, char ** datasets){
 
+struct H5FileIOHandler* H5FileIOHandler_init(char* fn, IOMode mode, char ** datasets){
+    struct H5FileIOHandler* self;
+    self = malloc(sizeof(*self));
+    
+    if (NULL == self){
+        goto emalloc;
+    }
+
+    self->mode = mode;
+    self->filename = fn;
+    
+    herr_t status;
+    switch(mode){
+        case CREATE:
+            self->file_id = H5Fcreate(fn, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+            break;
+        case READ:
+            self->file_id = H5Fopen(fn, H5F_ACC_RDONLY, H5P_DEFAULT);
+            break;
+        case WRITE:
+            // TODO
+            break;
+    }
+
+    efile:
+        arraylist_destroy(self->datasets);
+        free(self);
+
+    emalloc:
+        return NULL;
  };
 
 ErrorCode H5FileIOHandler_free(struct H5FileIOHandler *self){
@@ -112,8 +146,10 @@ void print_array(int *array, int length)
     printf("\n");
 }
 
+// TODO check https://docs.hdfgroup.org/hdf5/v1_14/_h5_e__u_g.html#sec_error for error handling
+
 int main(){
-    int *arr = (int *)malloc(sizeof(int)*4);
+    int *arr = (int *) malloc(sizeof(int)*4);
     for(int i = 0; i<4; i++){
         arr[i]=i;
     }
@@ -125,8 +161,6 @@ int main(){
     arraylist_add(mylist, ADDR_OF(1));
     arraylist_add(mylist, ADDR_OF(2));
     int* result = (int *) arraylist_pop(mylist);
-    printf("%d\n", *result);
-
-
+    printf("%d\n",(int) *result);
     free(arr);
 }

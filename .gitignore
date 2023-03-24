@@ -4,3 +4,6 @@
 .direnv*
 devenv.local.nix
 
+# TODO figure out how to configure clangd to not do this
+examples/src/arraylist.h
+
