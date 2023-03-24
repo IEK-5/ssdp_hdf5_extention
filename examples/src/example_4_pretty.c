@@ -1,5 +1,11 @@
 #include <hdf5.h>
 #include <hdf5_hl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "arraylist.h"
+
+# define ADDR_OF(X) ((int[]){X})
+
 /*  
     This is a refractor of example_4.c in which I did the following:
 
@@ -66,6 +72,12 @@ typedef enum {
     READ,
 } IOMode;
 
+// Maybe use H5E_values ?
+typedef enum {
+    SUCCESS = 0,
+    FAILURE = -1,
+    // add others with different negative values
+} ErrorCode;
 
 struct H5FileIOHandler{
     hid_t file_id;
@@ -77,14 +89,6 @@ struct H5FileIOHandler{
 struct H5FileIOHandler* H5FileIOHandler_init(char* fn, IOMode mode, char ** datasets){
 
  };
-
-
-// Maybe use H5E_values ?
-typedef enum {
-    SUCCESS = 0,
-    FAILURE = -1,
-    // add others with different negative values
-} ErrorCode;
 
 ErrorCode H5FileIOHandler_free(struct H5FileIOHandler *self){
 
@@ -101,3 +105,28 @@ ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, char *datase
 struct DatasetHandler{
 
 };
+
+void print_array(int *array, int length)
+{
+    for (int i = 0; i < length; i++) {  printf("%i ",array[i]);}
+    printf("\n");
+}
+
+int main(){
+    int *arr = (int *)malloc(sizeof(int)*4);
+    for(int i = 0; i<4; i++){
+        arr[i]=i;
+    }
+    print_array(arr, 4);
+    arr = (int *) realloc(arr, sizeof(&arr)*5);
+    arr[4] = 42;
+    print_array(arr, 5);
+    arraylist* mylist = arraylist_create();
+    arraylist_add(mylist, ADDR_OF(1));
+    arraylist_add(mylist, ADDR_OF(2));
+    int* result = (int *) arraylist_pop(mylist);
+    printf("%d\n", *result);
+
+
+    free(arr);
+}
