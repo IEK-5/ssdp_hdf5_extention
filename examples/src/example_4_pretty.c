@@ -1,17 +1,8 @@
-#include <H5Dpublic.h>
-#include <H5Epublic.h>
-#include <H5Fpublic.h>
-#include <H5Ipublic.h>
-#include <H5Ppublic.h>
-#include <H5Spublic.h>
-#include <H5Tpublic.h>
-#include <H5public.h>
-#include <H5version.h>
 #include <hdf5.h>
-#include <hdf5_hl.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
-// #include "arraylist.h"
+#include <math.h>
 
 # define ADDR_OF(X) ((int[]){X})
 
@@ -76,6 +67,15 @@
 
 */
 
+void print_array(int *array, int length){
+    for (int i = 0; i < length; i++){
+        printf("%i ",array[i]);
+    }
+    printf("\n");
+}
+
+
+
 typedef enum {
     CREATE,
     WRITE,
@@ -96,41 +96,57 @@ struct H5FileIOHandler{
 };
 
 struct H5DatasetHandler{
-    int nrows;
-    int ncols;
-    double **data;
+    /*
+        This struct helps managing a HD5Dataset which holds a n \times m array
+        The data is stored using 16-bit int to save diskspace => PRECISION MAY BE LOST
+
+        create it using int
+        write to file using write_array
+        read from file using read_array
+        when read read_X variables contain the data
+        
+    */
+    hsize_t read_nrows;
+    hsize_t read_ncols;
+    double **read_data;
     hid_t datatype;
+    int digit_scale;
     char *name;
     hid_t loc;
 };
 
 struct H5DatasetHandler* H5DatasetHandler_init(char *name, hid_t loc){
-    // init the dataspace
-    // init the dataset
-    // write the data
-    // close the dataset
-    // close the dataspace
-
-    // if close fails turn the pointer to NULL and free
+    /*
+        args:
+            name: name of dataset should be like a unix path e.g. /foo/bar/datasetname
+            loc: hid_t of the H5D file in which the dataset lives
+    */
     struct H5DatasetHandler* self = malloc(sizeof(struct H5DatasetHandler));
     if (NULL == self){
         return NULL;
     }
     self->loc = loc;
     self->name = name;
-    self->data = NULL;
-    self->ncols = -1;
-    self->nrows = -1;
-    self->datatype = H5T_STD_B16LE; // values times 10 and round to int make sure it fits into range 2^16 - 1
-    
-    
+    self->read_data = NULL;
+    self->read_ncols = -1;
+    self->read_nrows = -1;
+    self->digit_scale = 10;
+    self->datatype = H5T_NATIVE_UINT16; // values times 10 and round to int make sure it fits into range 2^16 - 1
     return self;
 }
 
 ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double** data, int nrows, int ncols){
-    // write the 2d caray data  into the HDF5 File using the paramaters in self
-    self->ncols = ncols;
-    self->nrows = nrows;
+    /*
+        write a 2d c-array of doubles into a hdf5file
+    */
+
+    // write the 2d c-array data  into the HDF5 File using the paramaters in self
+
+    /*
+        TODOs:
+            what do we do if a dataset already exists?
+            check if the values are in the correct range to fit into a 16 bit int
+    */
     hsize_t dims[2];
     herr_t status;
     dims[0]=nrows;
@@ -141,9 +157,17 @@ ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double** d
         return FAILURE;
     }
     dataset_id = H5Dcreate(self->loc, self->name, self->datatype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    
-    status  = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-    
+    if (H5I_INVALID_HID == dataset_id){
+        H5Sclose(dataspace_id);
+        return FAILURE;
+    }
+    uint16_t **rounded_data = malloc(sizeof(uint16_t)*ncols*nrows);
+    for(int i = 0; i<ncols; i++){
+        for(int j = 0; j<nrows; j++){
+            rounded_data[i][j] = (uint16_t) round((data[i][j]*self->digit_scale));
+        }
+    }
+    status  = H5Dwrite(dataset_id, self->datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, rounded_data);
     H5Dclose(dataset_id);
     H5Sclose(dataspace_id); // todo is it ok to close it here already?
     if (0 > status){
@@ -155,11 +179,20 @@ ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double** d
     }
 }
 
-ErrorCode H5DatasetHandler_read_array(struct H5DatasetHandler *self, double** out_data, hsize_t *out_dims){
+ErrorCode H5DatasetHandler_read_array(struct H5DatasetHandler *self){
     // read a 2d dataset from the file using the specifications in self
+
+    /*
+        todos
+    */
     hid_t dataspace_id, dataset_id;
     herr_t status;
-    dataset_id = H5Dopen(self->loc,self->name,H5P_DEFAULT);
+    hsize_t dims[2];
+    hsize_t maxdims[2];
+    uint16_t* buff;
+    int n_dims;
+
+    dataset_id = H5Dopen(self->loc, self->name, H5P_DEFAULT);
     if (H5I_INVALID_HID == dataset_id){
         goto error;
     }
@@ -168,13 +201,21 @@ ErrorCode H5DatasetHandler_read_array(struct H5DatasetHandler *self, double** ou
         H5Dclose(dataset_id);
         goto error;
     }
-    hsize_t *dims;
-    hsize_t maxdims[2];
-    out_data = malloc(dims[0]*dims[1]*sizeof(double));
-    dims = malloc(2*sizeof(hsize_t));
+   
     // Find rank and retrieve current and maximum dimension sizes.
-    H5Sget_simple_extent_dims(dataspace_id, dims, maxdims);
-    if (NULL == out_data || NULL == dims){
+    n_dims = H5Sget_simple_extent_dims(dataspace_id, dims, maxdims);
+    if (n_dims < 0){
+        H5Sclose(dataspace_id);
+        H5Dclose(dataset_id);
+        goto error;
+    }
+
+    self->read_nrows = dims[0];
+    self->read_ncols = dims[1];
+    
+    buff = malloc(sizeof(uint16_t)*dims[0]*dims[1]);
+
+    if (NULL == buff){
         printf("%s\n","Error when calling malloc");
         H5Sclose(dataspace_id);
         H5Dclose(dataset_id);
@@ -182,30 +223,51 @@ ErrorCode H5DatasetHandler_read_array(struct H5DatasetHandler *self, double** ou
     }
 
     // todo create array out_data and fill from h5 file
-    status = H5Dread(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, out_data);
+    status = H5Dread(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, buff);
+
     if(status < 0){
-        free(out_data);
-        free(dims);
+        free(buff);
         printf("%s %d\n","Status code:", status);
         H5Sclose(dataspace_id);
         H5Dclose(dataset_id);
         goto error;
     }
 
+    self->read_data = malloc(sizeof(double)*dims[0]*dims[1]);
+    
+    if (NULL == self->read_data){
+        free(buff);
+        printf("%s\n","Error when calling malloc");
+        H5Sclose(dataspace_id);
+        H5Dclose(dataset_id);
+        goto error;
+    }
+
+    for(int i = 0; i<self->read_ncols; i++){
+        for (int j = 0; j<self->read_nrows; j++){
+            self->read_data[i][j] = buff[i*(self->read_ncols) + j]/10;
+        }
+    }
+    free(buff);
     H5Sclose(dataspace_id);
     H5Dclose(dataset_id);
     return SUCCESS;
 
 error:
-    out_data = NULL;
-    out_dims = NULL;
+    self->read_data = NULL;
+    self->read_nrows = -1;
+    self->read_ncols = -1;
     return FAILURE;
 
 }
 
-void H5DatasetHandler_free(struct H5DatasetHandler *self){
-    // TODO
-    
+void H5DatasetHandler_free(struct H5DatasetHandler **self_addr){
+    struct H5DatasetHandler *self = *self_addr;
+    if(NULL != self->read_data){
+        free(self->read_data);
+    }
+    free(self);
+    *self_addr = NULL;
 }
 
 
@@ -261,6 +323,11 @@ void H5FileIOHandler_free(struct H5FileIOHandler *self){
 ErrorCode H5FileIOHander_read_array(struct H5FileIOHandler *self, char *dataset_name, double **out_data, int nrows, int ncols, int out_rank){
     // failure if dataset with dataset_name does not exist
     struct H5DatasetHandler *dataset = H5DatasetHandler_init(dataset_name, self->file_id);
+    ErrorCode err;
+    err = H5DatasetHandler_read_array(dataset);
+    if(FAILURE == err){
+
+    }
     
 
 }
@@ -270,12 +337,7 @@ ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, char *datase
     return FAILURE;
 }
 
-void print_array(int *array, int length){
-    for (int i = 0; i < length; i++){
-        printf("%i ",array[i]);
-    }
-    printf("\n");
-}
+
 
 // TODO check https://docs.hdfgroup.org/hdf5/v1_14/_h5_e__u_g.html#sec_error for error handling
 
