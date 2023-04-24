@@ -51,4 +51,3 @@ tests: $(LIB) $(TEST)/bin $(TESTBINS)
 
 clean:
 	$(RM) -r $(LIBDIR) $(OBJ) $(TEST)/bin
-	find . -type f -iname 'file*.h5' -exec rm -f {} \;
