@@ -38,12 +38,15 @@ $(LIBDIR):
 $(TEST)/bin:
 	mkdir $@
 
-# this puts object files into the root I thought they were "intermediate"
-$(TEST)/bin/%: $(TEST)/%.c
+
+$(TEST)/bin/%: $(TEST)/bin/%.o
 	$(CC) $(CFLAGS) $< $(OBJS) -o $@ -lcriterion
 
+$(TEST)/bin/%.o: $(TEST)/%.c
+	$(CC) $(CFLAGS) $< $(OBJS) -c -o $@ -lcriterion
+
 tests: $(LIB) $(TEST)/bin $(TESTBINS)
-	for test in $(TESTBINS) ; do ./$$test ; done
+	for test in $(TESTBINS) ; do ./$$test; done
 
 
 clean:

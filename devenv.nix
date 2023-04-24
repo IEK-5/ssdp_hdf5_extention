@@ -13,6 +13,7 @@
     pkgs.hdfview
     pkgs.clang-tools
     pkgs.valgrind
+    pkgs.criterion
   ];
 
   # https://devenv.sh/scripts/

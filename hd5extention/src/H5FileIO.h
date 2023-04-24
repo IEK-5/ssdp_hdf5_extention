@@ -13,7 +13,7 @@
 */
 struct H5FileIOHandler{
     hid_t file_id;
-    char* filename;
+    const char* filename;
     IOMode mode;
 };
 
@@ -29,14 +29,14 @@ struct H5FileIOHandler{
         pointer to initialized H5FileIOHandler struct
 
 */
-struct H5FileIOHandler* H5FileIOHandler_init(char* fn, IOMode mode);
+struct H5FileIOHandler* H5FileIOHandler_init(const char* fn, IOMode mode);
 
 /*
     Free the memory allocated and the resources opended by H5FileIOHandler_init
     args:
         self: pointer to H5FileIOHandler struct created by H5FileIOHandler_init
 */
-void H5FileIOHandler_free(struct H5FileIOHandler *self);
+void H5FileIOHandler_free(struct H5FileIOHandler **self_addr);
 
 /*
     Read a 1D array of doubles which should be treated as a 2D Matrix from the dataset called dataset_name from the HDF5 file.

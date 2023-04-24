@@ -1,0 +1,62 @@
+[
+ {
+  "directory": "/home/michael/repos/ssdp_hdf5/ssdp_hdf5_extention/hd5extention",
+  "arguments": [
+   "h5cc",
+   "-g",
+   "-Wall",
+   "-I",
+   "src",
+   "-c",
+   "src/H5Dataset.c",
+   "-o",
+   "obj/H5Dataset.o"
+  ],
+  "file": "src/H5Dataset.c"
+ },
+ {
+  "directory": "/home/michael/repos/ssdp_hdf5/ssdp_hdf5_extention/hd5extention",
+  "arguments": [
+   "h5cc",
+   "-g",
+   "-Wall",
+   "-I",
+   "src",
+   "-c",
+   "src/H5FileIO.c",
+   "-o",
+   "obj/H5FileIO.o"
+  ],
+  "file": "src/H5FileIO.c"
+ },
+ {
+  "directory": "/home/michael/repos/ssdp_hdf5/ssdp_hdf5_extention/hd5extention",
+  "arguments": [
+   "h5cc",
+   "-g",
+   "-Wall",
+   "-I",
+   "src",
+   "-c",
+   "src/enums.c",
+   "-o",
+   "obj/enums.o"
+  ],
+  "file": "src/enums.c"
+ },
+ {
+  "directory": "/home/michael/repos/ssdp_hdf5/ssdp_hdf5_extention/hd5extention",
+  "arguments": [
+   "h5cc",
+   "-g",
+   "-Wall",
+   "-I",
+   "src",
+   "-c",
+   "src/utils.c",
+   "-o",
+   "obj/utils.o"
+  ],
+  "file": "src/utils.c"
+ }
+]

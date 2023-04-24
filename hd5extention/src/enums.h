@@ -1,8 +1,9 @@
 #pragma once
 typedef enum {
-    CREATE,
-    WRITE,
-    READ,
+    X,
+    W,
+    A,
+    R,
 } IOMode;
 
 // Maybe use H5E_values ?

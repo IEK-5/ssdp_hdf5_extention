@@ -1,3 +1,4 @@
+#include <H5Fpublic.h>
 #include <hdf5.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -91,7 +92,7 @@
         pointer to initialized H5FileIOHandler struct
 
 */
-struct H5FileIOHandler* H5FileIOHandler_init(char* fn, IOMode mode){
+struct H5FileIOHandler* H5FileIOHandler_init(const char* fn, IOMode mode){
 
     struct H5FileIOHandler* self;
     self = malloc(sizeof(*self));
@@ -105,13 +106,16 @@ struct H5FileIOHandler* H5FileIOHandler_init(char* fn, IOMode mode){
     
     // todo change the mode to more ususually named words
     switch(mode){
-        case CREATE:
+        case X:
+            self->file_id = H5Fcreate(fn, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+            break;
+        case W:
             self->file_id = H5Fcreate(fn, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
             break;
-        case READ:
+        case R:
             self->file_id = H5Fopen(fn, H5F_ACC_RDONLY, H5P_DEFAULT);
             break;
-        case WRITE:
+        case A:
             self->file_id = H5Fopen(fn, H5F_ACC_RDWR, H5P_DEFAULT);
             break;
         // always add default for savety
@@ -139,10 +143,13 @@ emalloc:
     args:
         self: pointer to H5FileIOHandler struct created by H5FileIOHandler_init
 */
-void H5FileIOHandler_free(struct H5FileIOHandler *self){
-   
-    herr_t status = H5Fclose(self->file_id);
-    free(self);
+void H5FileIOHandler_free(struct H5FileIOHandler **self_addr){
+    struct H5FileIOHandler *self = *self_addr;
+    if (NULL != self){
+        H5Fclose(self->file_id);
+        free(self);
+        *self_addr = NULL;
+    }
 }
 
 // ErrorCode H5FileIOHandler_discover_datasets(struct H5FileIOHandler *self){}
