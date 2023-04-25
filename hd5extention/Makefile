@@ -46,8 +46,10 @@ $(TEST)/bin/%.o: $(TEST)/%.c
 	$(CC) $(CFLAGS) $< $(OBJS) -c -o $@ -lcriterion
 
 tests: $(LIB) $(TEST)/bin $(TESTBINS)
-	for test in $(TESTBINS) ; do ./$$test; done
+	for test in $(TESTBINS) ; do ./$$test --jobs 0; done
 
+testdebug: $(LIB) $(TEST)/bin $(TESTBINS)
+	./tests/bin/test_FileIO --filter "*read_write_big_table*"
 
 clean:
 	$(RM) -r $(LIBDIR) $(OBJ) $(TEST)/bin
