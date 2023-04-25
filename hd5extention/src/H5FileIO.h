@@ -49,6 +49,8 @@ void H5FileIOHandler_free(struct H5FileIOHandler **self_addr);
         out_ncols: number of columns of the Matrix
     return:
         SUCESS if it worked else a nonzero enum value
+    TODO
+        - check if self in in read mode if not return a non success errorcode
  */
 ErrorCode H5FileIOHander_read_array(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols);
 
@@ -65,3 +67,35 @@ ErrorCode H5FileIOHander_read_array(struct H5FileIOHandler *self, const char *da
         SUCESS if it worked else a nonzero enum value
  */
 ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols);
+
+/*
+    Read a 1D array of doubles which should be treated as a table from the dataset called dataset_name from the HDF5 file.
+    This function allocates memory for it's output which must be freed by the user!
+    args:
+        self: pointer created by H5FileIOHandler_init
+        dataset_name: name of the dataset in the HDF5 file
+        out_data: pointer to output array
+        out_nrows: number of rows of the Matrix
+        out_ncols: number of columns of the Matrix
+        out_column_names: pointer to array of column names
+    return:
+        SUCESS if it worked else a nonzero enum value
+    TODO
+        - check if self in in read mode if not return a non success errorcode
+ */
+ErrorCode H5FileIOHander_read_table(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols, char*** out_column_names);
+
+/*
+    Write a 1D array of doubles which should be treated as a Table to a hd5 file in as a dataset named dataset_name.
+    
+    args:
+        self: pointer created by H5FileIOHandler_init
+        dataset_name: name of the dataset in the HDF5 file
+        data: pointer pointer to data
+        nrows: number of rows of the Matrix
+        ncols: number of columns of the Matrix
+        column_names: array of column names
+    return:
+        SUCESS if it worked else a nonzero enum value
+ */
+ErrorCode H5FileIOHandler_write_table(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, const char** columns_names);

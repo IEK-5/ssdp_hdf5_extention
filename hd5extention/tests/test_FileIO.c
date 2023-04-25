@@ -5,21 +5,32 @@
 #include <stdint.h>
 #include <criterion/criterion.h>
 #include <stdlib.h>
+#include <time.h>
+#include <stdlib.h>
+#include <limits.h>
+
 #include "enums.h"
 #include "utils.h"
 #include "H5FileIO.h"
 
 static const char* TESTTEMPFILES = "testfiles";
+char *tempfile;
 int nrows = 5;
 int ncols = 3;
 double *data = NULL;
+char const ** columns_names;
+
 
 double * make_data(int nrows, int ncols){
-    int k = 0;
+    /*
+        Fill the array with random integer values which are smaler than UINT16_MAX/10
+        in this range we do not lose any digits which makes testing easier
+    */
+    
     double * data = malloc(sizeof(double)*nrows*ncols);
     for(int i = 0; i<nrows; i++){
         for(int j = 0; j<ncols; j++){
-            data[i*ncols+j]=(k++);
+            data[i*ncols+j]=rand()%(UINT16_MAX/10);
         }
     }
     return data;
@@ -27,15 +38,28 @@ double * make_data(int nrows, int ncols){
 
 
 static hid_t errorstack;
+H5E_auto2_t oldfunc;
+void *old_client_data;
 void suitesetup(){
     /*
         setup callback run prior to each test
         it is independend
         for each test and can be run concorrently
     */
+    
+    // shared global default errorstack
     // turn off error stack for the next function call
-    // shared global defaukt errorstack
+    // save old error handler
+    //H5Eget_auto2(errorstack, &oldfunc, &old_client_data);
+    // turn of errorhandling
     H5Eset_auto2(errorstack, NULL, NULL);
+    
+    data = make_data(nrows, ncols);
+    columns_names = malloc(sizeof(char *)*3);
+    columns_names[0] = "A";
+    columns_names[1] = "B";
+    columns_names[2] = "C";
+    
 }
 
 void suiteteardown(){
@@ -44,12 +68,15 @@ void suiteteardown(){
         it is independend
         for each test and can be run concorrently
     */
+    free(data);
+    free(columns_names);
+    free(tempfile);
 }
 
 TestSuite(H5FileIO, .init=suitesetup, .fini=suiteteardown);
 
 Test(H5FileIO, init_X){
-    char *tempfile = make_tempfile(TESTTEMPFILES, false);
+    tempfile = make_tempfile(TESTTEMPFILES, false);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, X);
     cr_assert(NULL != handler);
     H5FileIOHandler_free(&handler);
@@ -59,12 +86,10 @@ Test(H5FileIO, init_X){
     handler = H5FileIOHandler_init(tempfile, X);
     cr_assert(NULL == handler);
     H5FileIOHandler_free(&handler);
-    free(tempfile);
 }
 
 Test(H5FileIO, init_R){
     struct H5FileIOHandler* handler;
-    char *tempfile;
     
     tempfile = make_tempfile(TESTTEMPFILES, false);
 
@@ -78,12 +103,10 @@ Test(H5FileIO, init_R){
     cr_assert(NULL != handler);
 
     H5FileIOHandler_free(&handler);
-    free(tempfile);
 }
 
 Test(H5FileIO, init_A){
     struct H5FileIOHandler* handler;
-    char *tempfile;
     
     tempfile = make_tempfile(TESTTEMPFILES, false);
 
@@ -97,11 +120,10 @@ Test(H5FileIO, init_A){
     cr_assert(NULL != handler);
 
     H5FileIOHandler_free(&handler);
-    free(tempfile);
 }
 
 Test(H5FileIO, init_W){
-    char *tempfile = make_tempfile(TESTTEMPFILES, false);
+    tempfile = make_tempfile(TESTTEMPFILES, false);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, W);
     cr_assert(NULL != handler);
     free(tempfile);
@@ -110,56 +132,65 @@ Test(H5FileIO, init_W){
     handler = H5FileIOHandler_init(tempfile, W);
     cr_assert(NULL != handler);
     H5FileIOHandler_free(&handler);
-    free(tempfile);
 }
 
 Test(H5FileIO, init_X_exists){
-    char *tempfile = make_tempfile(TESTTEMPFILES, false);
+    tempfile = make_tempfile(TESTTEMPFILES, false);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, X);
     cr_assert(NULL != handler);
     H5FileIOHandler_free(&handler);
     handler = H5FileIOHandler_init(tempfile, X);
     cr_assert(NULL == handler);
     H5FileIOHandler_free(&handler);
-    free(tempfile);
 }
 
 Test(H5FileIO, init_W_exists){
-    char *tempfile = make_tempfile(TESTTEMPFILES,false);
+    tempfile = make_tempfile(TESTTEMPFILES,false);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, X);
     cr_assert(NULL != handler);
     H5FileIOHandler_free(&handler);
     handler = H5FileIOHandler_init(tempfile, W);
     cr_assert(NULL != handler);
     H5FileIOHandler_free(&handler);
-    free(tempfile);
 }
 
 
 Test(H5FileIO, write_array_dataset_does_not_exist){
-    char *tempfile = make_tempfile(TESTTEMPFILES,true);
+    tempfile = make_tempfile(TESTTEMPFILES,true);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, W);
-    data = make_data(nrows, ncols);
     ErrorCode err = H5FileIOHandler_write_array(handler, "some_data", data, nrows, ncols);
     cr_assert(SUCCESS == err);
     H5FileIOHandler_free(&handler);
-    free(data);
 }
 
 Test(H5FileIO, write_array_dataset_does_exist){
-    char *tempfile = make_tempfile(TESTTEMPFILES,true);
+    tempfile = make_tempfile(TESTTEMPFILES,true);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, W);
-    data = make_data(nrows, ncols);
     ErrorCode err = H5FileIOHandler_write_array(handler, "some_data", data, nrows, ncols);
     cr_assert(SUCCESS == err);
     err = H5FileIOHandler_write_array(handler, "some_data", data, nrows, ncols);
     cr_assert(SUCCESS != err);
     H5FileIOHandler_free(&handler);
-    free(data);
+}
+
+Test(H5FileIO, write_table_dataset_does_not_exist){
+    tempfile = make_tempfile(TESTTEMPFILES,true);
+    struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, W);
+    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names);
+    cr_assert(SUCCESS == err);
+    H5FileIOHandler_free(&handler);
+}
+
+Test(H5FileIO, write_table_dataset_does_exist){
+    tempfile = make_tempfile(TESTTEMPFILES,true);
+    struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, W);
+    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names);
+    err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names);
+    cr_assert(SUCCESS != err);
+    H5FileIOHandler_free(&handler);
 }
 
 Test(H5FileIO, init_W_overwrites){
-    char *tempfile;
     double *read_data;
     int read_nrows;
     int read_ncols;
@@ -180,7 +211,6 @@ Test(H5FileIO, read_array_exists){
     double *read_data;
     int read_nrows;
     int read_ncols;
-    char *tempfile;
     
     tempfile = make_tempfile(TESTTEMPFILES,true);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, W);
@@ -206,7 +236,6 @@ Test(H5FileIO, read_array_does_not_exists){
     double *read_data;
     int read_nrows;
     int read_ncols;
-    char *tempfile;
     struct H5FileIOHandler* handler;
     ErrorCode err;
 
@@ -220,10 +249,88 @@ Test(H5FileIO, read_array_does_not_exists){
     cr_assert(NULL != handler);
     err = H5FileIOHander_read_array(handler, "some_data", &read_data, &read_ncols, &read_nrows);
     cr_assert(SUCCESS != err);
-    
+
+    H5FileIOHandler_free(&handler);
+}
+
+Test(H5FileIO, read_table_exists){
+    // turn on error handling
+    // H5Eset_auto2(errorstack, oldfunc, old_client_data);
+    double *read_data;
+    int read_nrows;
+    int read_ncols;
+    char **read_columnnames;
+    tempfile = make_tempfile(TESTTEMPFILES,false);
+    struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, X);
+    data = make_data(nrows, ncols);
+    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names);
     H5FileIOHandler_free(&handler);
     
+    handler = H5FileIOHandler_init(tempfile, R);
+   
+    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_ncols, &read_nrows, &read_columnnames);
+    cr_assert(SUCCESS == err);
+    cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols);
+    H5FileIOHandler_free(&handler);
+    
+    handler = H5FileIOHandler_init(tempfile, A);
+    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_ncols, &read_nrows, &read_columnnames);
+    cr_assert(SUCCESS == err);
+    cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols);
+    H5FileIOHandler_free(&handler);
 }
+
+Test(H5FileIO, read_write_big_table){
+    // turn on error handling
+    // H5Eset_auto2(errorstack, oldfunc, old_client_data);
+    double *read_data;
+    int read_nrows;
+    int read_ncols;
+    int big_nrows = 60000;
+    char **read_columnnames;
+    tempfile = make_tempfile(TESTTEMPFILES,false);
+    struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, X);
+    data = make_data(big_nrows, ncols);
+    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, big_nrows, ncols, columns_names);
+    H5FileIOHandler_free(&handler);
+    
+    handler = H5FileIOHandler_init(tempfile, R);
+   
+    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_ncols, &read_nrows, &read_columnnames);
+    cr_assert(SUCCESS == err);
+    cr_assert_arr_eq(read_data, data, sizeof(double)*big_nrows*ncols);
+    H5FileIOHandler_free(&handler);
+    
+    handler = H5FileIOHandler_init(tempfile, A);
+    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_ncols, &read_nrows, &read_columnnames);
+    cr_assert(SUCCESS == err);
+    cr_assert_arr_eq(read_data, data, sizeof(double)*big_nrows*ncols);
+    H5FileIOHandler_free(&handler);
+}
+
+Test(H5FileIO, read_table_does_not_exists){
+    double *read_data;
+    int read_nrows;
+    int read_ncols;
+    char **read_columnnames;
+    struct H5FileIOHandler* handler;
+    ErrorCode err;
+
+    tempfile = make_tempfile(TESTTEMPFILES,false);
+
+    handler = H5FileIOHandler_init(tempfile, X);
+    cr_assert(NULL != handler);
+    H5FileIOHandler_free(&handler);
+    
+    handler = H5FileIOHandler_init(tempfile, R);
+    cr_assert(NULL != handler);
+    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_ncols, &read_nrows, &read_columnnames);
+    cr_assert(SUCCESS != err);
+
+    H5FileIOHandler_free(&handler);
+}
+
+
 /* This is necessary on windows, as BoxFort needs the main to be exported
    in order to find it. */
 #if defined (_WIN32) || defined (__CYGWIN__)
@@ -244,14 +351,15 @@ DLLEXPORT int main(int argc, char *argv[]) {
         criterion runs test in parallel
         to avoid race conditions create sgared ressoures prior to the tests running
     */
+    srand(17);
     make_dir(TESTTEMPFILES);
 
     struct criterion_test_set *tests = criterion_initialize();
 
     int result = 0;
-    if (criterion_handle_args(argc, argv, true))
+    if (criterion_handle_args(argc, argv, true)){
         result = !criterion_run_all_tests(tests);
-
+    }
     criterion_finalize(tests);
     /*
         criterion runs test in parallel

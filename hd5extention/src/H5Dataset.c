@@ -62,6 +62,9 @@ ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* da
         return FAILURE;
     }
     uint16_t *rounded_data = malloc(sizeof(uint16_t)*ncols*nrows);
+    if (NULL == rounded_data){
+        return OUTOFMEMORY;
+    }
     for(int i = 0; i<nrows; i++){
         for(int j = 0; j<ncols; j++){
             rounded_data[i*ncols+j] = (uint16_t) round((data[i*ncols+j]*self->digit_scale));
@@ -71,7 +74,6 @@ ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* da
     H5Dclose(dataset_id);
     H5Sclose(dataspace_id); // todo is it ok to close it here already?
     if (0 > status){
-        printf("%s %d\n","Status code:", status);
         return FAILURE;
     }
     else{
@@ -127,7 +129,6 @@ ErrorCode H5DatasetHandler_read_array(struct H5DatasetHandler *self){
     buff = malloc(sizeof(uint16_t)*dims[0]*dims[1]);
 
     if (NULL == buff){
-        printf("%s\n","Error when calling malloc");
         H5Sclose(dataspace_id);
         H5Dclose(dataset_id);
         return_val = OUTOFMEMORY;
@@ -139,7 +140,6 @@ ErrorCode H5DatasetHandler_read_array(struct H5DatasetHandler *self){
 
     if(status < 0){
         free(buff);
-        printf("%s %d\n","Status code:", status);
         H5Sclose(dataspace_id);
         H5Dclose(dataset_id);
         return_val = FAILURE;
@@ -150,7 +150,6 @@ ErrorCode H5DatasetHandler_read_array(struct H5DatasetHandler *self){
     
     if (NULL == self->read_data){
         free(buff);
-        printf("%s\n","Error when calling malloc");
         H5Sclose(dataspace_id);
         H5Dclose(dataset_id);
         return_val = OUTOFMEMORY;
