@@ -98,4 +98,4 @@ ErrorCode H5FileIOHander_read_table(struct H5FileIOHandler *self, const char *da
     return:
         SUCESS if it worked else a nonzero enum value
  */
-ErrorCode H5FileIOHandler_write_table(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, const char** columns_names);
+ErrorCode H5FileIOHandler_write_table(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, const char** columns_names, hsize_t chunk_size);

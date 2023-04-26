@@ -41,10 +41,11 @@ struct H5TableHandler* H5TableHandler_init(const char *name, hid_t loc){
         nrows: rows of table
         ncols: columns of table
         names: array of ncols pointers to \0 terminated strings which
+        chunk_size: size of chunks for compressed io
     return:
         SUCESS if operation worked otherwise an enum with a nonzero value
 */ 
-ErrorCode H5TableHandler_write_table(struct H5TableHandler *self, double* data, int nrows, int ncols, const char **names){
+ErrorCode H5TableHandler_write_table(struct H5TableHandler *self, double* data, int nrows, int ncols, const char **names, hsize_t chunk_size){
     /*
         TODOs:
             what do we do if a dataset already exists?
@@ -56,7 +57,6 @@ ErrorCode H5TableHandler_write_table(struct H5TableHandler *self, double* data, 
     // https://portal.hdfgroup.org/display/HDF5/HDF5+Table+%28H5TB%29+Interface
     size_t field_offsets[ncols];
     hid_t field_types[ncols];
-    hsize_t     chunk_size = 10; // chunck size for chunked io
     int        *fill_data  = NULL;
     int         compress   = 1; // compression flag I thing 0 is no compression
     for(int i = 0; i<ncols;i++){

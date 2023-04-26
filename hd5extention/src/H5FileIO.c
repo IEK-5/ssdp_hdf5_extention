@@ -1,4 +1,3 @@
-#include <H5Fpublic.h>
 #include <hdf5.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -248,10 +247,10 @@ ErrorCode H5FileIOHander_read_table(struct H5FileIOHandler *self, const char *da
     return:
         SUCESS if it worked else a nonzero enum value
  */
-ErrorCode H5FileIOHandler_write_table(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, const char** columns_names){
+ErrorCode H5FileIOHandler_write_table(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, const char** columns_names, hsize_t chunk_size){
     struct H5TableHandler *table = H5TableHandler_init(dataset_name, self->file_id);
     ErrorCode err;
-    err = H5TableHandler_write_table( table, data,  nrows,  ncols, columns_names);
+    err = H5TableHandler_write_table( table, data,  nrows,  ncols, columns_names, chunk_size);
     free(table);
     // failure if drive is full
     return err;

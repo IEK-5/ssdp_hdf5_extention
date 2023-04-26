@@ -1,4 +1,5 @@
 #include <H5Epublic.h>
+#include <H5public.h>
 #include <H5version.h>
 #include <hdf5.h>
 #include <stdio.h>
@@ -20,7 +21,6 @@ int ncols = 3;
 double *data = NULL;
 char const ** columns_names;
 
-
 double * make_data(int nrows, int ncols){
     /*
         Fill the array with random integer values which are smaler than UINT16_MAX/10
@@ -30,7 +30,7 @@ double * make_data(int nrows, int ncols){
     double * data = malloc(sizeof(double)*nrows*ncols);
     for(int i = 0; i<nrows; i++){
         for(int j = 0; j<ncols; j++){
-            data[i*ncols+j]=rand()%(UINT16_MAX/10);
+            data[i*ncols+j]=(rand())%(UINT16_MAX/10);
         }
     }
     return data;
@@ -176,7 +176,7 @@ Test(H5FileIO, write_array_dataset_does_exist){
 Test(H5FileIO, write_table_dataset_does_not_exist){
     tempfile = make_tempfile(TESTTEMPFILES,true);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, W);
-    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names);
+    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names, 1);
     cr_assert(SUCCESS == err);
     H5FileIOHandler_free(&handler);
 }
@@ -184,8 +184,8 @@ Test(H5FileIO, write_table_dataset_does_not_exist){
 Test(H5FileIO, write_table_dataset_does_exist){
     tempfile = make_tempfile(TESTTEMPFILES,true);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, W);
-    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names);
-    err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names);
+    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names, 1);
+    err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names, 1);
     cr_assert(SUCCESS != err);
     H5FileIOHandler_free(&handler);
 }
@@ -263,7 +263,7 @@ Test(H5FileIO, read_table_exists){
     tempfile = make_tempfile(TESTTEMPFILES,false);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, X);
     data = make_data(nrows, ncols);
-    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names);
+    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names, 1);
     H5FileIOHandler_free(&handler);
     
     handler = H5FileIOHandler_init(tempfile, R);
@@ -291,7 +291,7 @@ Test(H5FileIO, read_write_big_table){
     tempfile = make_tempfile(TESTTEMPFILES,false);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, X);
     data = make_data(big_nrows, ncols);
-    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, big_nrows, ncols, columns_names);
+    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, big_nrows, ncols, columns_names, 1000);
     H5FileIOHandler_free(&handler);
     
     handler = H5FileIOHandler_init(tempfile, R);

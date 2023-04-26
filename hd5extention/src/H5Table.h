@@ -1,4 +1,5 @@
 #pragma once
+#include <H5public.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -43,10 +44,11 @@ struct H5TableHandler* H5TableHandler_init(const char *name, hid_t loc);
         nrows: rows of table
         ncols: columns of table
         names: array of ncols pointers to \0 terminated strings which
+        chunk_size: size of chunks for compressed io
     return:
         SUCESS if operation worked otherwise an enum with a nonzero value
 */ 
-ErrorCode H5TableHandler_write_table(struct H5TableHandler *self, double* data, int nrows, int ncols, const char **names);
+ErrorCode H5TableHandler_write_table(struct H5TableHandler *self, double* data, int nrows, int ncols, const char **names, hsize_t chunk_size);
 
 /*
     Read a 2D Dataset with fixed sizes from a HDF5 file into the Handler struct
