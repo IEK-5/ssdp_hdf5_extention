@@ -1,10 +1,8 @@
-#include <H5Epublic.h>
-#include <H5public.h>
-#include <H5version.h>
 #include <hdf5.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <criterion/criterion.h>
+#include <criterion/new/assert.h>
 #include <stdlib.h>
 #include <time.h>
 #include <stdlib.h>
@@ -20,6 +18,7 @@ int nrows = 5;
 int ncols = 3;
 double *data = NULL;
 char const ** columns_names;
+
 
 double * make_data(int nrows, int ncols){
     /*
@@ -78,13 +77,13 @@ TestSuite(H5FileIO, .init=suitesetup, .fini=suiteteardown);
 Test(H5FileIO, init_X){
     tempfile = make_tempfile(TESTTEMPFILES, false);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, X);
-    cr_assert(NULL != handler);
+    cr_assert(handler != NULL);
     H5FileIOHandler_free(&handler);
     free(tempfile);
 
     tempfile = make_tempfile(TESTTEMPFILES, true);
     handler = H5FileIOHandler_init(tempfile, X);
-    cr_assert(NULL == handler);
+    cr_assert(handler == NULL);
     H5FileIOHandler_free(&handler);
 }
 
@@ -94,13 +93,13 @@ Test(H5FileIO, init_R){
     tempfile = make_tempfile(TESTTEMPFILES, false);
 
     handler = H5FileIOHandler_init(tempfile, R);
-    cr_assert(NULL == handler);
+    cr_assert(handler == NULL);
 
     handler = H5FileIOHandler_init(tempfile, X);
     H5FileIOHandler_free(&handler);
 
     handler = H5FileIOHandler_init(tempfile, R);
-    cr_assert(NULL != handler);
+    cr_assert(handler != NULL);
 
     H5FileIOHandler_free(&handler);
 }
@@ -111,13 +110,13 @@ Test(H5FileIO, init_A){
     tempfile = make_tempfile(TESTTEMPFILES, false);
 
     handler = H5FileIOHandler_init(tempfile, A);
-    cr_assert(NULL == handler);
+    cr_assert(handler == NULL);
 
     handler = H5FileIOHandler_init(tempfile, X);
     H5FileIOHandler_free(&handler);
 
     handler = H5FileIOHandler_init(tempfile, A);
-    cr_assert(NULL != handler);
+    cr_assert(handler != NULL);
 
     H5FileIOHandler_free(&handler);
 }
@@ -125,32 +124,32 @@ Test(H5FileIO, init_A){
 Test(H5FileIO, init_W){
     tempfile = make_tempfile(TESTTEMPFILES, false);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, W);
-    cr_assert(NULL != handler);
+    cr_assert(handler != NULL);
     free(tempfile);
 
     tempfile = make_tempfile(TESTTEMPFILES, false);
     handler = H5FileIOHandler_init(tempfile, W);
-    cr_assert(NULL != handler);
+    cr_assert(handler != NULL);
     H5FileIOHandler_free(&handler);
 }
 
 Test(H5FileIO, init_X_exists){
     tempfile = make_tempfile(TESTTEMPFILES, false);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, X);
-    cr_assert(NULL != handler);
+    cr_assert(handler != NULL);
     H5FileIOHandler_free(&handler);
     handler = H5FileIOHandler_init(tempfile, X);
-    cr_assert(NULL == handler);
+    cr_assert(handler == NULL);
     H5FileIOHandler_free(&handler);
 }
 
 Test(H5FileIO, init_W_exists){
     tempfile = make_tempfile(TESTTEMPFILES,false);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, X);
-    cr_assert(NULL != handler);
+    cr_assert(handler != NULL);
     H5FileIOHandler_free(&handler);
     handler = H5FileIOHandler_init(tempfile, W);
-    cr_assert(NULL != handler);
+    cr_assert(handler != NULL);
     H5FileIOHandler_free(&handler);
 }
 
@@ -203,7 +202,7 @@ Test(H5FileIO, init_W_overwrites){
 
     // test if dataset is still in file
     handler = H5FileIOHandler_init(tempfile, W);
-    err = H5FileIOHander_read_array(handler, "some_data", &read_data, &read_ncols, &read_nrows);
+    err = H5FileIOHander_read_array(handler, "some_data", &read_data, &read_nrows, &read_ncols);
     cr_assert(SUCCESS != err);
 }  
 
@@ -220,13 +219,15 @@ Test(H5FileIO, read_array_exists){
     
     handler = H5FileIOHandler_init(tempfile, R);
    
-    err = H5FileIOHander_read_array(handler, "some_data", &read_data, &read_ncols, &read_nrows);
+    err = H5FileIOHander_read_array(handler, "some_data", &read_data, &read_nrows, &read_ncols);
     cr_assert(SUCCESS == err);
+    cr_assert(read_nrows == nrows);
+    cr_assert(read_ncols == ncols);
     cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols);
     H5FileIOHandler_free(&handler);
 
     handler = H5FileIOHandler_init(tempfile, A);
-    err = H5FileIOHander_read_array(handler, "some_data", &read_data, &read_ncols, &read_nrows);
+    err = H5FileIOHander_read_array(handler, "some_data", &read_data, &read_nrows, &read_ncols);
     cr_assert(SUCCESS == err);
     cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols);
     H5FileIOHandler_free(&handler);
@@ -242,12 +243,12 @@ Test(H5FileIO, read_array_does_not_exists){
     tempfile = make_tempfile(TESTTEMPFILES,false);
 
     handler = H5FileIOHandler_init(tempfile, X);
-    cr_assert(NULL != handler);
+    cr_assert(handler != NULL);
     H5FileIOHandler_free(&handler);
     
     handler = H5FileIOHandler_init(tempfile, R);
-    cr_assert(NULL != handler);
-    err = H5FileIOHander_read_array(handler, "some_data", &read_data, &read_ncols, &read_nrows);
+    cr_assert(handler != NULL);
+    err = H5FileIOHander_read_array(handler, "some_data", &read_data, &read_nrows, &read_ncols);
     cr_assert(SUCCESS != err);
 
     H5FileIOHandler_free(&handler);
@@ -268,13 +269,13 @@ Test(H5FileIO, read_table_exists){
     
     handler = H5FileIOHandler_init(tempfile, R);
    
-    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_ncols, &read_nrows, &read_columnnames);
+    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
     cr_assert(SUCCESS == err);
     cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols);
     H5FileIOHandler_free(&handler);
     
     handler = H5FileIOHandler_init(tempfile, A);
-    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_ncols, &read_nrows, &read_columnnames);
+    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
     cr_assert(SUCCESS == err);
     cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols);
     H5FileIOHandler_free(&handler);
@@ -296,14 +297,14 @@ Test(H5FileIO, read_write_big_table){
     
     handler = H5FileIOHandler_init(tempfile, R);
    
-    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_ncols, &read_nrows, &read_columnnames);
+    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
     cr_assert(SUCCESS == err);
     cr_assert_arr_eq(read_data, data, sizeof(double)*big_nrows*ncols);
     H5FileIOHandler_free(&handler);
     
     handler = H5FileIOHandler_init(tempfile, A);
-    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_ncols, &read_nrows, &read_columnnames);
-    cr_assert(SUCCESS == err);
+    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
+    cr_assert(SUCCESS == err, "%s",ErrorCode_to_string(err));
     cr_assert_arr_eq(read_data, data, sizeof(double)*big_nrows*ncols);
     H5FileIOHandler_free(&handler);
 }
@@ -319,18 +320,73 @@ Test(H5FileIO, read_table_does_not_exists){
     tempfile = make_tempfile(TESTTEMPFILES,false);
 
     handler = H5FileIOHandler_init(tempfile, X);
-    cr_assert(NULL != handler);
+    cr_assert(handler != NULL);
     H5FileIOHandler_free(&handler);
     
     handler = H5FileIOHandler_init(tempfile, R);
-    cr_assert(NULL != handler);
-    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_ncols, &read_nrows, &read_columnnames);
+    cr_assert(handler != NULL);
+    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
     cr_assert(SUCCESS != err);
 
     H5FileIOHandler_free(&handler);
 }
 
+Test(H5FileIOHandler, read_array_correct_rounding){
+    double written_doubles[4] = {2.22, 3.33, 4.44, 5.55};
+    double expected_read_doubles[4] = {2.2, 3.3, 4.4, 5.6};
+    double *read_doubles;
+    int read_nrows;
+    int read_ncols;
+    struct H5FileIOHandler* handler;
+    ErrorCode err;
+    tempfile = make_tempfile(TESTTEMPFILES, true);
+    
+    handler = H5FileIOHandler_init(tempfile, W);
+    cr_assert(handler != NULL);
+    err = H5FileIOHandler_write_array(handler, "some_data", written_doubles, 4, 1);
+    cr_assert(SUCCESS == err);
+    H5FileIOHandler_free(&handler);
 
+    handler = H5FileIOHandler_init(tempfile, R);
+    cr_assert(handler != NULL);
+    err = H5FileIOHander_read_array(handler, "some_data", &read_doubles, &read_nrows, &read_ncols);
+    cr_assert(SUCCESS == err);
+    H5FileIOHandler_free(&handler);
+    for(int i = 0; i<4; i++)
+    {
+        cr_assert(ieee_ulp_eq(dbl,read_doubles[i], expected_read_doubles[i],2));
+    }
+}
+
+Test(H5FileIOHandler, read_table_correct_rounding){
+    double written_doubles[4] = {2.22, 3.33, 4.44, 5.55};
+    double expected_read_doubles[4] = {2.2, 3.3, 4.4, 5.6};
+    double *read_doubles;
+    int read_nrows;
+    int read_ncols;
+    struct H5FileIOHandler* handler;
+    ErrorCode err;
+    const char * column_names[1] = {"Column1"};
+    char **read_columnnames;
+    tempfile = make_tempfile(TESTTEMPFILES, true);
+    
+    handler = H5FileIOHandler_init(tempfile, W);
+    cr_assert(handler != NULL);
+    
+    err = H5FileIOHandler_write_table(handler, "some_data", written_doubles, 4, 1, column_names, 1);
+    cr_assert(SUCCESS == err);
+    H5FileIOHandler_free(&handler);
+
+    handler = H5FileIOHandler_init(tempfile, R);
+    cr_assert(handler != NULL);
+    err = H5FileIOHander_read_table(handler, "some_data", &read_doubles, &read_nrows, &read_ncols, &read_columnnames);
+    cr_assert(SUCCESS == err);
+    H5FileIOHandler_free(&handler);
+    for(int i = 0; i<4; i++)
+    {
+        cr_assert(ieee_ulp_eq(dbl,read_doubles[i], expected_read_doubles[i],2));
+    }
+}
 /* This is necessary on windows, as BoxFort needs the main to be exported
    in order to find it. */
 #if defined (_WIN32) || defined (__CYGWIN__)

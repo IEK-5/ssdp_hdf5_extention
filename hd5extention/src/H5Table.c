@@ -58,7 +58,10 @@ ErrorCode H5TableHandler_write_table(struct H5TableHandler *self, double* data, 
     size_t field_offsets[ncols];
     hid_t field_types[ncols];
     int        *fill_data  = NULL;
-    int         compress   = 1; // compression flag I thing 0 is no compression
+    int         compress   = 1; // compression flag I think 0 is no compression
+    if(chunk_size <= 0){
+        return FAILURE;
+    }
     for(int i = 0; i<ncols;i++){
         field_offsets[i]=sizeof(uint16_t)*i;
         field_types[i]=self->datatype;
