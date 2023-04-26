@@ -49,7 +49,7 @@ tests: $(LIB) $(TEST)/bin $(TESTBINS)
 	for test in $(TESTBINS) ; do ./$$test --jobs 0; done
 
 testdebug: $(LIB) $(TEST)/bin $(TESTBINS)
-	./tests/bin/tests/test_H5FileIO.c --filter "*read_write_big_table*"
+	./tests/bin/test_H5FileIO --filter "*read_write_big_table*"
 
 clean:
 	$(RM) -r $(LIBDIR) $(OBJ) $(TEST)/bin
