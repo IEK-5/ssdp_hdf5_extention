@@ -1,4 +1,5 @@
 #pragma once
+#include <H5public.h>
 #include <hdf5.h>
 #include "enums.h"
 
@@ -63,10 +64,11 @@ ErrorCode H5FileIOHander_read_array(struct H5FileIOHandler *self, const char *da
         data: pointer pointer to data
         nrows: number of rows of the Matrix
         ncols: number of columns of the Matrix
+        chunk_size: number of rows making up a chunk for IO purposes
     return:
         SUCESS if it worked else a nonzero enum value
  */
-ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols);
+ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, hsize_t chunk_size);
 
 /*
     Read a 1D array of doubles which should be treated as a table from the dataset called dataset_name from the HDF5 file.
@@ -99,3 +101,12 @@ ErrorCode H5FileIOHander_read_table(struct H5FileIOHandler *self, const char *da
         SUCESS if it worked else a nonzero enum value
  */
 ErrorCode H5FileIOHandler_write_table(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, const char** columns_names, hsize_t chunk_size);
+
+/*
+    TODO
+    - make first extention of ssdp in new branch
+    - function to add columns
+    - function to add records
+    - set type for each column maybe use basic dataset and attributes for it
+
+*/

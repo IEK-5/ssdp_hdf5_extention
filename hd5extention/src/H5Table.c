@@ -120,6 +120,7 @@ ErrorCode H5TableHandler_read_table(struct H5TableHandler *self){
         self->read_columnnames[i] = malloc(sizeof(char)*100);
     }
     status = H5TBget_field_info(self->loc, self->name, self->read_columnnames, field_sizes, field_offsets, type_size);
+
     if (status < 0){
         return_val = FAILURE;
         goto error;

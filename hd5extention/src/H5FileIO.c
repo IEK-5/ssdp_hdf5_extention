@@ -1,4 +1,6 @@
+#include <H5Tpublic.h>
 #include <hdf5.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -8,7 +10,7 @@
 #include "enums.h"
 #include "H5FileIO.h"
 #include "H5Dataset.h"
-
+#include "H5Datatypes.h"
 /*  
     This is a refractor of example_4.c in which I did the following:
 
@@ -190,14 +192,17 @@ ErrorCode H5FileIOHander_read_array(struct H5FileIOHandler *self, const char *da
         data: pointer pointer to data
         nrows: number of rows of the Matrix
         ncols: number of columns of the Matrix
+        chunk_size: number of rows making up a chunk for IO purposes
     return:
         SUCESS if it worked else a nonzero enum value
  */
-ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols){
+ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, size_t chunk_size){
     struct H5DatasetHandler *dataset = H5DatasetHandler_init(dataset_name, self->file_id);
     ErrorCode err;
-    err = H5DatasetHandler_write_array( dataset, data,  nrows,  ncols);
+    hid_t small_float = H5T_define_nbit_float(H5T_NATIVE_DOUBLE, 63, 58, 5, 48, 10);
+    err = H5DatasetHandler_write_array( dataset, data,  nrows,  ncols, small_float, chunk_size);
     free(dataset);
+    H5Tclose(small_float);
     // failure if drive is full
     return err;
 }

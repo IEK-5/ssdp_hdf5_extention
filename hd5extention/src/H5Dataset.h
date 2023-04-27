@@ -1,4 +1,5 @@
 #pragma once
+#include <H5public.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -17,8 +18,6 @@ struct H5DatasetHandler{
     hsize_t read_nrows;
     hsize_t read_ncols;
     double *read_data;
-    hid_t datatype;
-    double digit_scale;
     const char *name;
     hid_t loc;
 };
@@ -41,10 +40,11 @@ struct H5DatasetHandler* H5DatasetHandler_init(const char *name, hid_t loc);
         data: pointer to array of doubles
         nrows: rows of matrix
         ncols: columns of matrix
+        chunk_size: number of rows making up a chunk for IO purposes
     return:
         SUCESS if operation worked otherwise an enum with a nonzero value
 */ 
-ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* data, int nrows, int ncols);
+ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* data, int nrows, int ncols, hid_t disk_datatype, hsize_t chunk_size);
 
 /*
     Read a 2D Dataset with fixed sizes from a HDF5 file into the Handler struct
