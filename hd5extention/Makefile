@@ -20,6 +20,7 @@ release: clean
 release: $(LIB)
 
 $(LIB): $(LIBDIR) $(OBJ) $(OBJS)
+	# this makes a static library
 	$(RM) $(LIB)
 	ar -cvrs $(LIB) $(OBJS)
 
@@ -49,7 +50,7 @@ tests: $(LIB) $(TEST)/bin $(TESTBINS)
 	for test in $(TESTBINS) ; do ./$$test --jobs 0; done
 
 testdebug: $(LIB) $(TEST)/bin $(TESTBINS)
-	./tests/bin/test_H5FileIO --filter "*read_write_big_table*"
+	./tests/bin/test_H5FileIO --filter "*read_array_exists*"
 
 clean:
 	$(RM) -r $(LIBDIR) $(OBJ) $(TEST)/bin
