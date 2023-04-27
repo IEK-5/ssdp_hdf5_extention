@@ -14,6 +14,7 @@
     pkgs.clang-tools
     pkgs.valgrind
     pkgs.criterion
+    pkgs.splint
   ];
 
   # https://devenv.sh/scripts/
