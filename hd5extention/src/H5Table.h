@@ -1,15 +1,12 @@
 #pragma once
 #include <H5Tpublic.h>
 #include <H5public.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <hdf5.h>
 #include "H5Enums.h"
-
-struct H5TableRecortType{
-
-};
 
 struct H5TableHandler{
     /* 
@@ -30,7 +27,7 @@ struct H5TableHandler{
     hid_t loc;
 };
 
-size_t yeet[1] = {HOFFSET(struct H5TableHandler, loc)};
+
 /*
     Create and initialize a H5TableHandler struct.
     The struct must be freed!
