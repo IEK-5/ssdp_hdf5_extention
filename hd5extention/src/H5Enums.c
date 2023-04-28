@@ -1,4 +1,4 @@
-#include "enums.h"
+#include "H5Enums.h"
 const char* ErrorCode_to_string(ErrorCode err){
     switch (err) {
         case SUCCESS:

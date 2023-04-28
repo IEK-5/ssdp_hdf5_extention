@@ -7,7 +7,7 @@
 #include <math.h>
 #include <time.h>
 #include "H5Table.h"
-#include "enums.h"
+#include "H5Enums.h"
 #include "H5FileIO.h"
 #include "H5Dataset.h"
 #include "H5Datatypes.h"

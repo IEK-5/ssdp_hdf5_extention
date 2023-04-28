@@ -1,7 +1,7 @@
 #pragma once
 #include <H5public.h>
 #include <hdf5.h>
-#include "enums.h"
+#include "H5Enums.h"
 
 /*
     This struct helps managing a HD5Dataset which holds a n \times m array

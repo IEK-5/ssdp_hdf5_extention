@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <limits.h>
 
-#include "enums.h"
+#include "H5Enums.h"
 #include "utils.h"
 #include "H5FileIO.h"
 

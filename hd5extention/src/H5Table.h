@@ -1,10 +1,15 @@
 #pragma once
+#include <H5Tpublic.h>
 #include <H5public.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <hdf5.h>
-#include "enums.h"
+#include "H5Enums.h"
+
+struct H5TableRecortType{
+
+};
 
 struct H5TableHandler{
     /* 
@@ -25,6 +30,7 @@ struct H5TableHandler{
     hid_t loc;
 };
 
+size_t yeet[1] = {HOFFSET(struct H5TableHandler, loc)};
 /*
     Create and initialize a H5TableHandler struct.
     The struct must be freed!
@@ -59,3 +65,4 @@ ErrorCode H5TableHandler_write_table(struct H5TableHandler *self, double* data, 
         SUCESS if operation worked otherwise an enum with a nonzero value
 */
 ErrorCode H5TableHandler_read_table(struct H5TableHandler *self);
+

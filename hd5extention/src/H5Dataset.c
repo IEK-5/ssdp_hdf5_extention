@@ -4,7 +4,7 @@
 #include <math.h>
 #include <hdf5.h>
 
-#include "enums.h"
+#include "H5Enums.h"
 #include "H5Dataset.h"
 #include "H5Datatypes.h"
 #include "H5Properties.h"

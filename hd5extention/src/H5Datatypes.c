@@ -4,7 +4,7 @@
 #include <hdf5.h>
 
 #include "H5Datatypes.h"
-#include "enums.h"
+#include "H5Enums.h"
 
 hid_t H5T_define_nbit_float(hid_t base_datatype, size_t sign_pos, size_t exponent_pos, size_t exponent_size, size_t mantissa_pos, size_t mantissa_size){
     hsize_t base_size = H5Tget_size(base_datatype);

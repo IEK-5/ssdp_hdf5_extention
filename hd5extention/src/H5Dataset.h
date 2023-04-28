@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <hdf5.h>
-#include "enums.h"
+#include "H5Enums.h"
 
 struct H5DatasetHandler{
     /* 

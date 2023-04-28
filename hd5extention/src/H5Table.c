@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <math.h>
-#include "enums.h"
+#include "H5Enums.h"
 #include "H5Table.h"
 
 
