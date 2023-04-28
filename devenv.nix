@@ -15,6 +15,8 @@
     pkgs.valgrind
     pkgs.criterion
     pkgs.splint
+    pkgs.libsForQt5.kcachegrind
+    pkgs.massif-visualizer
   ];
 
   # https://devenv.sh/scripts/

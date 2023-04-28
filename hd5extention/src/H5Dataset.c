@@ -55,25 +55,25 @@ ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* da
     dims[0]=nrows;
     dims[1]=ncols;
     hid_t dataspace_id, dataset_id;
-    hid_t dataspace_props;
+    hid_t dataspace_create_props, dataspace_access_props;
     dataspace_id = H5Screate_simple(2,dims,NULL);
     if(H5I_INVALID_HID == dataspace_id){
         return FAILURE;
     }
     const hsize_t chunk_dims[2] = {chunk_size,ncols};
-    dataspace_props = H5P_create_dataset_proplist(2, chunk_dims);
-
-    dataset_id = H5Dcreate(self->loc, self->name, disk_datatype, dataspace_id, H5P_DEFAULT, dataspace_props, H5P_DEFAULT);
+    dataspace_create_props = H5P_create_dataset_proplist(2, chunk_dims);
+    dataspace_access_props = H5P_access_dataset_proplist();
+    dataset_id = H5Dcreate(self->loc, self->name, disk_datatype, dataspace_id, H5P_DEFAULT, dataspace_create_props, dataspace_access_props);
     if (H5I_INVALID_HID == dataset_id){
         H5Sclose(dataspace_id);
-        H5Pclose(dataspace_props);
+        H5Pclose(dataspace_create_props);
         return FAILURE;
     }
     
     status  = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
     H5Dclose(dataset_id);
     H5Sclose(dataspace_id); // todo is it ok to close it here already?
-    H5Pclose(dataspace_props);
+    H5Pclose(dataspace_create_props);
     if (0 > status){
         return FAILURE;
     }
