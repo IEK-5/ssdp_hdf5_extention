@@ -75,7 +75,7 @@ void create_dataset(hsize_t chunk_size){
     double* data = make_zeros(nrows, ncols);
     
     //recursive_delete("compressed_files/datasets");
-    //make_dir("compressed_files/datasets");
+    make_dir("compressed_files/datasets");
     const char* template = "compressed_files/datasets/chunksize_%d.h5";
     char *filename = malloc(sizeof(char)*100);
     
