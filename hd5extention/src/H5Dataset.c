@@ -62,7 +62,7 @@ ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* da
     }
     const hsize_t chunk_dims[2] = {chunk_size,ncols};
     dataspace_create_props = H5P_create_dataset_proplist(2, chunk_dims);
-    dataspace_access_props = H5P_access_dataset_proplist();
+    dataspace_access_props = H5P_create_16_MB_Chunk_Cache_access_dataset_proplist();
     dataset_id = H5Dcreate(self->loc, self->name, disk_datatype, dataspace_id, H5P_DEFAULT, dataspace_create_props, dataspace_access_props);
     if (H5I_INVALID_HID == dataset_id){
         H5Sclose(dataspace_id);

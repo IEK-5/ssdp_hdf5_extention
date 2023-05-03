@@ -36,3 +36,5 @@
 */
 hid_t H5T_define_nbit_float(hid_t base_datatype, size_t sign_pos, size_t exponent_pos, size_t exponent_size, size_t mantissa_pos, size_t mantissa_size);
 
+// TODO make this a macro for 16 bit
+# define H5T_define_16bit_float() H5T_define_nbit_float(H5T_NATIVE_DOUBLE, 63, 58, 5, 48, 10)

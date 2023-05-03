@@ -47,7 +47,7 @@ $(TEST)/bin/%.o: $(TEST)/%.c
 	$(CC) $(CFLAGS) $< $(OBJS) -c -o $@ -lcriterion
 
 tests: $(LIB) $(TEST)/bin $(TESTBINS)
-	for test in $(TESTBINS) ; do ./$$test --jobs 0; done
+	for test in $(TESTBINS) ; do ./$$test 100000 --jobs 0; done
 
 testvalgrind: $(LIB) $(TEST)/bin $(TESTBINS)
 	valgrind --tool=callgrind --dump-instr=yes --simulate-cache=yes --collect-jumps=yes --collect-atstart=no --instr-atstart=no --trace-children=yes --callgrind-out-file=callgrind_%p.out ./tests/bin/test_compression #--filter "*WriteZerosDifferentChunkSizes*" --jobs 1
@@ -55,6 +55,8 @@ testvalgrind: $(LIB) $(TEST)/bin $(TESTBINS)
 testdebug: $(LIB) $(TEST)/bin $(TESTBINS)
 	for chunk in 100 10000 1000000; do valgrind --tool=massif --massif-out-file=massif_chunksize_$$chunk.%p.out ./tests/bin/test_compression $$chunk ;done
 
+testdatatype: $(LIB) $(TEST)/bin $(TESTBINS)
+	./tests/bin/test_H5Datatype 
 
 clean:
-	$(RM) -r $(LIBDIR) $(OBJ) $(TEST)/bin callgrind_* massif*
+	$(RM) -r $(LIBDIR) $(OBJ) $(TEST)/bin callgrind_* massif* testfiles

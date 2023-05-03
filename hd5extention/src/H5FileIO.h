@@ -65,10 +65,11 @@ ErrorCode H5FileIOHander_read_array(struct H5FileIOHandler *self, const char *da
         nrows: number of rows of the Matrix
         ncols: number of columns of the Matrix
         chunk_size: number of rows making up a chunk for IO purposes
+        disk_datatype: H5 Datatype which will be saved in the file
     return:
         SUCESS if it worked else a nonzero enum value
  */
-ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, hsize_t chunk_size);
+ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, hsize_t chunk_size, hid_t disk_datatype);
 
 /*
     Read a 1D array of doubles which should be treated as a table from the dataset called dataset_name from the HDF5 file.
