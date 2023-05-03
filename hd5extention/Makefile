@@ -38,6 +38,7 @@ $(LIBDIR):
 
 $(TEST)/bin:
 	mkdir $@
+	mkdir compressed_files
 
 
 $(TEST)/bin/%: $(TEST)/bin/%.o
