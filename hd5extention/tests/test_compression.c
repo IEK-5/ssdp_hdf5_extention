@@ -1,6 +1,5 @@
-
-#include <H5public.h>
 #include <hdf5.h>
+#include <H5public.h>
 #include <stdio.h>
 #include <stdint.h>
 // #include <criterion/criterion.h>
@@ -13,6 +12,7 @@
  #include <unistd.h>
 
 
+#include "H5Datatypes.h"
 #include "valgrind/callgrind.h"
 
 #include "H5Enums.h"
@@ -56,17 +56,21 @@ Test(WriteCompressedTables,WriteZerosDifferentChunkSizes){
 
 void write_dataset(char *filename, double *data, int nrows, int ncols, size_t chunk_size){
     ErrorCode err;
+    herr_t status;
     struct H5FileIOHandler* handler;
     handler = H5FileIOHandler_init(filename, W);
-    err = H5FileIOHandler_write_array(handler, "data", data, nrows, ncols, chunk_size);
+    hid_t small_float = H5T_define_16bit_float();
+    err = H5FileIOHandler_write_array(handler, "data", data, nrows, ncols, chunk_size, small_float);
     //cr_assert(SUCCESS == err);
+    status = H5Tclose(small_float);
+    //cr_assert(status >= 0);
     H5FileIOHandler_free(&handler);
 }
 
 //Test(WriteCompressedDatasets,WriteZerosDifferentChunkSizes){
 //int main(){
 void create_dataset(hsize_t chunk_size){
-    int nrows = 26843545/10;
+    int nrows = 26843545;
     int ncols = 5;
     double* data = make_zeros(nrows, ncols);
     
