@@ -36,7 +36,7 @@ hid_t H5T_define_nbit_float(hid_t base_datatype, size_t sign_pos, size_t exponen
         goto error;
     }
     
-    for(int i = 0; i<exponent_size-1; i++){
+    for(size_t i = 0; i<exponent_size-1; i++){
         ebias*=2;
     }
     ebias-=1;

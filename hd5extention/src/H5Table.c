@@ -1,5 +1,6 @@
 #include "hdf5.h"
 #include "hdf5_hl.h"
+#include <H5public.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <math.h>
@@ -116,7 +117,7 @@ ErrorCode H5TableHandler_read_table(struct H5TableHandler *self){
     field_offsets = malloc(sizeof(size_t)*self->read_ncols);
     field_sizes = malloc(sizeof(size_t)*self->read_ncols);
     self->read_columnnames = malloc(sizeof(char*)*(self->read_ncols));
-    for(int i=0; i<self->read_ncols; i++){
+    for(hsize_t i=0; i<self->read_ncols; i++){
         self->read_columnnames[i] = malloc(sizeof(char)*100);
     }
     status = H5TBget_field_info(self->loc, self->name, self->read_columnnames, field_sizes, field_offsets, type_size);
@@ -140,8 +141,8 @@ ErrorCode H5TableHandler_read_table(struct H5TableHandler *self){
         goto error;
     }
     
-    for(int i = 0; i<self->read_nrows; i++){
-        for (int j = 0; j<self->read_ncols; j++){
+    for(hsize_t i = 0; i<self->read_nrows; i++){
+        for (hsize_t j = 0; j<self->read_ncols; j++){
             self->read_data[i*(self->read_ncols) + j] = ((double) buff[i*(self->read_ncols) + j])/self->digit_scale;
         }
     }

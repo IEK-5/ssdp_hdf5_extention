@@ -139,7 +139,7 @@ efileio:
 emalloc:
     return NULL;
 
- };
+ }
 
 /*
     Free the memory allocated and the resources opended by H5FileIOHandler_init

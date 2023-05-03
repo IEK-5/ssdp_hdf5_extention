@@ -1,6 +1,6 @@
 INC_DIR=src
 CC := h5cc
-CFLAGS := -g -Wall -Wextra -I $(INC_DIR)
+CFLAGS := -g -Wall -Wextra -Wpedantic -I $(INC_DIR)
 SRC=src
 OBJ=obj
 SRCS=$(wildcard $(SRC)/*.c)
@@ -38,7 +38,7 @@ $(LIBDIR):
 
 $(TEST)/bin:
 	mkdir $@
-	mkdir compressed_files
+	mkdir -p compressed_files
 
 
 $(TEST)/bin/%: $(TEST)/bin/%.o
@@ -64,4 +64,4 @@ testdatatype: $(LIB) $(TEST)/bin $(TESTBINS)
 	./tests/bin/test_H5Datatype 
 
 clean:
-	$(RM) -r $(LIBDIR) $(OBJ) $(TEST)/bin callgrind_* massif* testfiles
+	$(RM) -r $(LIBDIR) $(OBJ) $(TEST)/bin callgrind_* massif* testfiles compressed_files
