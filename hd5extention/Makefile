@@ -1,6 +1,6 @@
 INC_DIR=src
 CC := h5cc
-CFLAGS := -g -Wall -I $(INC_DIR)
+CFLAGS := -g -Wall -Wextra -I $(INC_DIR)
 SRC=src
 OBJ=obj
 SRCS=$(wildcard $(SRC)/*.c)
@@ -48,6 +48,10 @@ $(TEST)/bin/%.o: $(TEST)/%.c
 
 tests: $(LIB) $(TEST)/bin $(TESTBINS)
 	for test in $(TESTBINS) ; do ./$$test 100000 --jobs 0; done
+
+testscompile: $(LIB) $(TEST)/bin $(TESTBINS)
+	@echo "Compiled all tests"
+
 
 testvalgrind: $(LIB) $(TEST)/bin $(TESTBINS)
 	valgrind --tool=callgrind --dump-instr=yes --simulate-cache=yes --collect-jumps=yes --collect-atstart=no --instr-atstart=no --trace-children=yes --callgrind-out-file=callgrind_%p.out ./tests/bin/test_compression #--filter "*WriteZerosDifferentChunkSizes*" --jobs 1
