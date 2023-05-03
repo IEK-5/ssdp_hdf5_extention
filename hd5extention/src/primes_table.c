@@ -7,3 +7,12 @@ unsigned int get_nth_prime(unsigned int index){
     }
     return PRIMES[index];
 }
+
+unsigned int get_next_biggest_prime(unsigned int value){
+    for(unsigned int i = 0; i< N_PRIMES; i++){
+        if(value<PRIMES[i]){
+            return PRIMES[i];
+        }
+    }
+    return 0;
+}

@@ -17,3 +17,18 @@ extern const size_t N_PRIMES;
 */
 unsigned int get_nth_prime(unsigned int index);
 
+/*
+    get the next biggest prime number which comes after value
+    
+    args:
+        value: a positive number
+    return:
+        next biggest prime if successfull else 0
+    
+    This function reads from a table therefor it may fail.
+
+    example input-output pairs:
+    input:  0   1   2   8   
+    output: 2   2   2   11
+*/
+unsigned int get_next_biggest_prime(unsigned int value);
