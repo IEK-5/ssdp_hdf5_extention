@@ -1,8 +1,3 @@
-#include <H5Ipublic.h>
-#include <H5Tpublic.h>
-#include <H5public.h>
-#include <hdf5.h>
-
 #include "H5Datatypes.h"
 #include "H5Enums.h"
 

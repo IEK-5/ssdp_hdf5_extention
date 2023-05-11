@@ -1,6 +1,4 @@
 #pragma once
-#include <H5Tpublic.h>
-#include <H5public.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>

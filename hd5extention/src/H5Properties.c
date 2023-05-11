@@ -1,5 +1,3 @@
-#include <H5Ipublic.h>
-#include <H5Ppublic.h>
 #include <hdf5.h>
 #include <math.h>
 #include <stdlib.h>

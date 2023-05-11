@@ -1,5 +1,4 @@
 #pragma once
-#include <H5public.h>
 #include <hdf5.h>
 #include "H5Enums.h"
 

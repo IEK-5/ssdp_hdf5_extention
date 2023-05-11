@@ -1,6 +1,5 @@
-#include "hdf5.h"
-#include "hdf5_hl.h"
-#include <H5public.h>
+#include <hdf5.h>
+#include <hdf5_hl.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <math.h>

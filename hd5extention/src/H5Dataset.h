@@ -1,5 +1,4 @@
 #pragma once
-#include <H5public.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
