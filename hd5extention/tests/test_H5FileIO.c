@@ -7,6 +7,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <unistd.h>
 
 #include "H5Datatypes.h"
 #include "H5Enums.h"
@@ -108,9 +109,8 @@ Test(H5FileIO, init_A){
     struct H5FileIOHandler* handler;
     
     tempfile = make_tempfile(TESTTEMPFILES, false);
-
     handler = H5FileIOHandler_init(tempfile, A);
-    cr_assert(handler == NULL, "Handler creation should fail");
+    cr_assert(handler != NULL, "Handler creation should never fail due to filestyetem reasons with A");
 
     handler = H5FileIOHandler_init(tempfile, X);
     H5FileIOHandler_free(&handler);

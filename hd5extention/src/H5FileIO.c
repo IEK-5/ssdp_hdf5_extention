@@ -5,6 +5,12 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#ifdef WIN32
+#include <io.h>
+#define F_OK 0
+#define access _access
+#endif
+#include <unistd.h>
 #include "H5Table.h"
 #include "H5Enums.h"
 #include "H5FileIO.h"
@@ -117,7 +123,14 @@ struct H5FileIOHandler* H5FileIOHandler_init(const char* fn, IOMode mode){
             self->file_id = H5Fopen(fn, H5F_ACC_RDONLY, H5P_DEFAULT);
             break;
         case A:
-            self->file_id = H5Fopen(fn, H5F_ACC_RDWR, H5P_DEFAULT);
+            if (access(fn, F_OK) == 0) {
+                // file exists
+                self->file_id = H5Fopen(fn, H5F_ACC_RDWR, H5P_DEFAULT);
+            } else {
+                // file doesn't exist
+                self->file_id = H5Fcreate(fn, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+            }
+            
             break;
         // always add default for savety
         default:
