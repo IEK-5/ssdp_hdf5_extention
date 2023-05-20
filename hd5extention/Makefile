@@ -1,6 +1,6 @@
 INC_DIR=src
 CC := h5cc
-CFLAGS := -g -Wall -Wextra -Wpedantic -I $(INC_DIR) -I /usr/include/hdf5/seria # second -I is for Ubuntu
+CFLAGS := -g -Wall -Wextra -Wpedantic -I $(INC_DIR) -I /usr/include/hdf5/serial # second -I is for Ubuntu
 SRC=src
 OBJ=obj
 SRCS=$(wildcard $(SRC)/*.c)
