@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include <time.h>
 #ifdef WIN32
 #include <io.h>
@@ -180,7 +181,7 @@ void H5FileIOHandler_free(struct H5FileIOHandler **self_addr){
     return:
         SUCESS if it worked else a nonzero enum value
  */
-ErrorCode H5FileIOHander_read_array(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols){
+ErrorCode H5FileIOHandler_read_array(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols){
     // failure if dataset with dataset_name does not exist
     struct H5DatasetHandler *dataset = H5DatasetHandler_init(dataset_name, self->file_id);
     ErrorCode err;
@@ -238,7 +239,7 @@ ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *
     TODO
         - check if self in in read mode if not return a non success errorcode
  */
-ErrorCode H5FileIOHander_read_table(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols, char*** out_column_names){
+ErrorCode H5FileIOHandler_read_table(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols, char*** out_column_names){
     struct H5TableHandler *table = H5TableHandler_init(dataset_name, self->file_id);
     ErrorCode err = H5TableHandler_read_table(table);
     if(SUCCESS == err){
@@ -271,4 +272,122 @@ ErrorCode H5FileIOHandler_write_table(struct H5FileIOHandler *self, const char *
     free(table);
     // failure if drive is full
     return err;
+}
+
+
+#define DEFAULTPOOLSIZE 5
+#define POOLINCREMENT 5
+/*
+    Create an empty pool.
+*/
+struct  H5FileIOHandlerPool* H5FileIOHandlerPool_init(){
+    
+    struct H5FileIOHandlerPool *out = malloc(sizeof(struct H5FileIOHandlerPool));
+    out->poolsize = 5;
+    out->handlers = calloc(sizeof(struct H5FileIOHandler*), DEFAULTPOOLSIZE);
+}
+
+/*
+    Clean up the pool and close any open handlers.
+*/
+void H5FileIOHandlerPool_free(struct  H5FileIOHandlerPool** self_addr){
+    struct H5FileIOHandlerPool *self = *self_addr;
+    H5FileIOHandlerPool_close_all_files(self);
+    free(self->handlers);
+    free(self);
+    *self_addr = NULL;
+}
+
+/*
+    get the index of a handler in the pool that deals with a file fn
+*/
+int _H5FileIOHandlerPool_get_handler_index(struct H5FileIOHandlerPool * pool, char *fn){
+    for(int i = 0; i < pool->poolsize; i++){
+        struct H5FileIOHandler* curr = pool->handlers[i];
+        if(NULL != curr){
+            if(strcmp(curr->filename, fn) == 0){
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+/*
+    Return the index of the first position in handlers which is NULL.
+    Return -1 if the pool has no NULL entries or if the pool has size 0.
+*/
+int _H5FileIOHandlerPool_get_next_free_index(struct H5FileIOHandlerPool * pool){
+    for(int i = 0; i < pool ->poolsize; i++){
+        if(NULL == pool->handlers[i]){
+            return i;
+        }
+    }
+    return -1;
+}
+
+/*
+    Get a H5FileIOHander for a file called fn opened in IOMode mode.
+    It the Handler does not exists create one.
+    If it is already in the pool return the adress from the pool.
+    If it is already in the pool but opened under a different mode return NULL!
+*/
+struct H5FileIOHandler* H5FileIOHandlerPool_get_handler(struct H5FileIOHandlerPool *self, char *fn, IOMode mode){
+    // check if handler already exists
+    struct H5FileIOHandler *out;
+    int index;
+    
+    index = _H5FileIOHandlerPool_get_handler_index(self, fn);
+    if(index >= 0){
+        out = self->handlers[index];
+        if (out->mode == mode){
+            return out;
+        }else{
+            return NULL;
+        }   
+    }
+
+    // is the pool big enough?
+    index = _H5FileIOHandlerPool_get_next_free_index(self);
+    if(index < 0){
+        // make the pool bigger
+        self->handlers = realloc(self->handlers, sizeof(struct H5DatasetHandler*)*(self->poolsize+POOLINCREMENT));
+        for(int i = 0; i < POOLINCREMENT; i++){
+            self->handlers[self->poolsize+i]=NULL;
+        }
+        // index at the beginning of the new part of the pool
+        index = self->poolsize;
+        // updated size
+        self->poolsize+=5;
+    }
+
+    // create new handler
+    out = H5FileIOHandler_init(fn, mode);
+    self->handlers[index] = out;
+    
+    return out;
+}
+
+/*
+    Close the handler which deals with the HDF5 file called fn
+*/
+// set the pointer to NULL if the handler is closed
+void H5FileIOHandlerPool_close_file(struct H5FileIOHandlerPool *self, char* fn){
+    int index = _H5FileIOHandlerPool_get_handler_index(self, fn);
+    if(index < 0){
+        return;
+    }
+    H5FileIOHandler_free(&self->handlers[index]); // this sets the entry in the pool to zero
+}
+
+/*
+    Close all handlers in the pool
+*/
+// set the pointer to NULL if the handler is closed
+void H5FileIOHandlerPool_close_all_files(struct H5FileIOHandlerPool *self){
+    for(int i = 0; i < self->poolsize; i++){
+        if(NULL != self->handlers[i]){
+            H5FileIOHandler_free(&self->handlers[i]); // this sets the entry in the pool to zero
+        }
+    }
 }

@@ -117,7 +117,7 @@ void write_data(char* fn, double *data, int nrows, hid_t dtype){
 void read_data(char *fn){
     handler = H5FileIOHandler_init(fn, R);
     cr_assert(handler != NULL);
-    err = H5FileIOHander_read_array(handler, "some_data", &read_doubles, &read_nrows, &read_ncols);
+    err = H5FileIOHandler_read_array(handler, "some_data", &read_doubles, &read_nrows, &read_ncols);
     cr_assert(SUCCESS == err);
     H5FileIOHandler_free(&handler);
 }

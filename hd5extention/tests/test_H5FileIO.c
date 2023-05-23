@@ -202,7 +202,7 @@ Test(H5FileIO, init_W_overwrites){
 
     // test if dataset is still in file
     handler = H5FileIOHandler_init(tempfile, W);
-    err = H5FileIOHander_read_array(handler, "some_data", &read_data, &read_nrows, &read_ncols);
+    err = H5FileIOHandler_read_array(handler, "some_data", &read_data, &read_nrows, &read_ncols);
     cr_assert(SUCCESS != err, "Writing array should fail %s", ErrorCode_to_string(err));
 }  
 
@@ -220,7 +220,7 @@ Test(H5FileIO, read_array_exists){
     
     handler = H5FileIOHandler_init(tempfile, R);
    
-    err = H5FileIOHander_read_array(handler, "some_data", &read_data, &read_nrows, &read_ncols);
+    err = H5FileIOHandler_read_array(handler, "some_data", &read_data, &read_nrows, &read_ncols);
     cr_assert(SUCCESS == err, "Reading array failed %s", ErrorCode_to_string(err));
     cr_assert(read_nrows == nrows, "Wrong read nrows");
     cr_assert(read_ncols == ncols, "Wrong read ncols");
@@ -228,7 +228,7 @@ Test(H5FileIO, read_array_exists){
     H5FileIOHandler_free(&handler);
 
     handler = H5FileIOHandler_init(tempfile, A);
-    err = H5FileIOHander_read_array(handler, "some_data", &read_data, &read_nrows, &read_ncols);
+    err = H5FileIOHandler_read_array(handler, "some_data", &read_data, &read_nrows, &read_ncols);
     cr_assert(SUCCESS == err, "Reading array failed %s", ErrorCode_to_string(err));
     cr_assert(read_nrows == nrows, "Wrong read nrows");
     cr_assert(read_ncols == ncols, "Wrong read ncols");
@@ -251,7 +251,7 @@ Test(H5FileIO, read_array_does_not_exists){
     
     handler = H5FileIOHandler_init(tempfile, R);
     cr_assert(handler != NULL, "Handler creation failed");
-    err = H5FileIOHander_read_array(handler, "some_data", &read_data, &read_nrows, &read_ncols);
+    err = H5FileIOHandler_read_array(handler, "some_data", &read_data, &read_nrows, &read_ncols);
     cr_assert(SUCCESS != err, "Reading of array should fail %s", ErrorCode_to_string(err));
 
     H5FileIOHandler_free(&handler);
@@ -272,13 +272,13 @@ Test(H5FileIO, read_table_exists){
     
     handler = H5FileIOHandler_init(tempfile, R);
    
-    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
+    err = H5FileIOHandler_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
     cr_assert(SUCCESS == err, "Reading of table failed %s", ErrorCode_to_string(err));
     cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols, "Read values are not written values");
     H5FileIOHandler_free(&handler);
     
     handler = H5FileIOHandler_init(tempfile, A);
-    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
+    err = H5FileIOHandler_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
     cr_assert(SUCCESS == err, "Reading of table failed %s", ErrorCode_to_string(err));
     cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols, "Read values are not written values");
     H5FileIOHandler_free(&handler);
@@ -300,13 +300,13 @@ Test(H5FileIO, read_write_big_table){
     
     handler = H5FileIOHandler_init(tempfile, R);
    
-    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
+    err = H5FileIOHandler_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
      cr_assert(SUCCESS == err, "Reading of table failed %s", ErrorCode_to_string(err));
     cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols, "Read values are not written values");
     H5FileIOHandler_free(&handler);
     
     handler = H5FileIOHandler_init(tempfile, A);
-    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
+    err = H5FileIOHandler_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
      cr_assert(SUCCESS == err, "Reading of table failed %s", ErrorCode_to_string(err));
     cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols, "Read values are not written values");
     H5FileIOHandler_free(&handler);
@@ -328,11 +328,12 @@ Test(H5FileIO, read_table_does_not_exists){
     
     handler = H5FileIOHandler_init(tempfile, R);
     cr_assert(handler != NULL, "Creation of Handler failed");
-    err = H5FileIOHander_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
+    err = H5FileIOHandler_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
     cr_assert(SUCCESS != err, "Reading of table should fail %s", ErrorCode_to_string(err));
 
     H5FileIOHandler_free(&handler);
 }
+
 
 
 /* This is necessary on windows, as BoxFort needs the main to be exported

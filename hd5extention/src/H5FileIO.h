@@ -52,7 +52,7 @@ void H5FileIOHandler_free(struct H5FileIOHandler **self_addr);
     TODO
         - check if self in in read mode if not return a non success errorcode
  */
-ErrorCode H5FileIOHander_read_array(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols);
+ErrorCode H5FileIOHandler_read_array(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols);
 
 /*
     Write a 1D array of doubles which should be treated as a 2D Matrix from to a hd5 file in as a data set named dataset_name.
@@ -85,7 +85,7 @@ ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *
     TODO
         - check if self in in read mode if not return a non success errorcode
  */
-ErrorCode H5FileIOHander_read_table(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols, char*** out_column_names);
+ErrorCode H5FileIOHandler_read_table(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols, char*** out_column_names);
 
 /*
     Write a 1D array of doubles which should be treated as a Table to a hd5 file in as a dataset named dataset_name.
@@ -110,3 +110,40 @@ ErrorCode H5FileIOHandler_write_table(struct H5FileIOHandler *self, const char *
     - set type for each column maybe use basic dataset and attributes for it
 
 */
+
+/*
+    Helper Struct to manage multiple open HDF5 Files.
+
+    members:
+        handlers: array of pointer to H5FileIOHandler
+        poolsize: size of `handlers`
+*/
+struct H5FileIOHandlerPool{
+    struct H5FileIOHandler **handlers;
+    int poolsize;
+};
+
+/*
+    Create an empty pool.
+*/
+struct  H5FileIOHandlerPool* H5FileIOHandlerPool_init();
+
+void H5FileIOHandlerPool_free(struct  H5FileIOHandlerPool** self_addr);
+
+/*
+    Get a H5FileIOHandler for a file called fn opened in IOMode mode.
+    It the Handler does not exists create one.
+    If it is already in the pool return the adress from the pool.
+    If it is already in the pool but opened under a different mode return NULL!
+*/
+struct H5FileIOHandler* H5FileIOHandlerPool_get_handler(struct H5FileIOHandlerPool *self, char *fn, IOMode mode);
+
+/*
+    Close the handler which deals with the HDF5 file called fn
+*/
+void H5FileIOHandlerPool_close_file(struct H5FileIOHandlerPool *self, char* fn);
+
+/*
+    Close all handlers in the pool
+*/
+void H5FileIOHandlerPool_close_all_files(struct H5FileIOHandlerPool *self);
