@@ -23,7 +23,7 @@ struct H5DatasetHandler{
 
 /*
     Create and initialize a H5DDatasetHandler struct.
-    The struct must be freed!
+    The struct must be freed using H5DatasetHandler_free!
     args:
         name: name of dataset should be like a unix path e.g. /foo/bar/datasetname
         loc: hid_t of the H5D file in which the dataset lives
@@ -54,3 +54,9 @@ ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* da
         SUCESS if operation worked otherwise an enum with a nonzero value
 */
 ErrorCode H5DatasetHandler_read_array(struct H5DatasetHandler *self);
+
+/*
+ * Free a handler created by H5DatasetHandler_init
+ */
+void H5DatasetHandler_free(struct H5DatasetHandler **self_addr);
+

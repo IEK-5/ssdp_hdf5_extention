@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <hdf5.h>
+#include <string.h>
 
 #include "H5Enums.h"
 #include "H5Dataset.h"
@@ -23,7 +24,7 @@ struct H5DatasetHandler* H5DatasetHandler_init(const char *name, hid_t loc){
         return NULL;
     }
     self->loc = loc;
-    self->name = name;
+    self->name = strdup(name);
     self->read_data = NULL;
     self->read_ncols = -1;
     self->read_nrows = -1;
@@ -156,14 +157,9 @@ error:
 
 }
 
-/*
-    we dont have this free because the memory is passed to the user and therfore we dont really need a free function anymore
-    void H5DatasetHandler_free(struct H5DatasetHandler **self_addr){
-        struct H5DatasetHandler *self = *self_addr;
-        //if(NULL != self->read_data){
-        //    free(self->read_data);
-        //}
-        free(self);
-        *self_addr = NULL;
-    }
-*/
+void H5DatasetHandler_free(struct H5DatasetHandler **self_addr){
+    struct H5DatasetHandler *self = *self_addr;
+    free(self->name);
+    free(self);
+    *self_addr = NULL;
+}

@@ -110,7 +110,7 @@ struct H5FileIOHandler* H5FileIOHandler_init(const char* fn, IOMode mode){
     }
 
     self->mode = mode;
-    self->filename = fn;
+    self->filename = strdup(fn);
     
     // todo change the mode to more ususually named words
     switch(mode){
@@ -162,6 +162,7 @@ void H5FileIOHandler_free(struct H5FileIOHandler **self_addr){
     struct H5FileIOHandler *self = *self_addr;
     if (NULL != self){
         H5Fclose(self->file_id);
+	free(self->filename);
         free(self);
         *self_addr = NULL;
     }
@@ -191,7 +192,7 @@ ErrorCode H5FileIOHandler_read_array(struct H5FileIOHandler *self, const char *d
         *out_nrows = dataset->read_nrows;
         *out_ncols = dataset->read_ncols;
     }
-    free(dataset);
+    H5DatasetHandler_free(&dataset);
     return err;
 
 }
@@ -214,7 +215,7 @@ ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *
     struct H5DatasetHandler *dataset = H5DatasetHandler_init(dataset_name, self->file_id);
     ErrorCode err;
     err = H5DatasetHandler_write_array( dataset, data,  nrows,  ncols, disk_datatype, chunk_size);
-    free(dataset);
+    H5DatasetHandler_free(&dataset);
     // failure if drive is full
     return err;
 }
@@ -285,6 +286,7 @@ struct  H5FileIOHandlerPool* H5FileIOHandlerPool_init(){
     struct H5FileIOHandlerPool *out = malloc(sizeof(struct H5FileIOHandlerPool));
     out->poolsize = 5;
     out->handlers = calloc(sizeof(struct H5FileIOHandler*), DEFAULTPOOLSIZE);
+    return out;
 }
 
 /*
