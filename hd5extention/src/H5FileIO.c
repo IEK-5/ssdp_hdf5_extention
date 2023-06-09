@@ -282,15 +282,28 @@ ErrorCode H5FileIOHandler_write_table(struct H5FileIOHandler *self, const char *
     Create an empty pool.
 */
 struct  H5FileIOHandlerPool* H5FileIOHandlerPool_init(){
-    
-    struct H5FileIOHandlerPool *out = malloc(sizeof(struct H5FileIOHandlerPool));
+
+    struct H5FileIOHandlerPool *out;
+    out = malloc(sizeof(*out));
+    if (NULL == out) goto eout;
+
     out->poolsize = 5;
-    out->handlers = calloc(sizeof(struct H5FileIOHandler*), DEFAULTPOOLSIZE);
+    out->handlers = calloc(sizeof(*out->handlers), DEFAULTPOOLSIZE);
+    if (NULL == out->handlers) goto ehandlers;
+
     return out;
+ehandlers:
+    free(out);
+eout:
+    return NULL;
 }
 
 /*
     Clean up the pool and close any open handlers.
+
+    QTODO: why H5FileIOHandlerPool** self_addr is a double pointer? Why can't you just use:
+
+            void H5FileIOHandlerPool_free(struct  H5FileIOHandlerPool* self)?
 */
 void H5FileIOHandlerPool_free(struct  H5FileIOHandlerPool** self_addr){
     struct H5FileIOHandlerPool *self = *self_addr;
@@ -353,7 +366,13 @@ struct H5FileIOHandler* H5FileIOHandlerPool_get_handler(struct H5FileIOHandlerPo
     index = _H5FileIOHandlerPool_get_next_free_index(self);
     if(index < 0){
         // make the pool bigger
-        self->handlers = realloc(self->handlers, sizeof(struct H5DatasetHandler*)*(self->poolsize+POOLINCREMENT));
+        self->handlers = realloc(self->handlers, (self->poolsize+POOLINCREMENT)*sizeof(*self->handlers));
+        // QTODO: * handle scenario when realloc fails
+        //        * I opted for the
+        //                  p = malloc(... sizeof(*p))
+        //          pattern, as it works all the time and you have
+        //          smaller chance getting a structure of a wrong
+        //          size.
         for(int i = 0; i < POOLINCREMENT; i++){
             self->handlers[self->poolsize+i]=NULL;
         }
