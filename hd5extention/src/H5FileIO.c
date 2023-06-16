@@ -301,9 +301,10 @@ eout:
 /*
     Clean up the pool and close any open handlers.
 
-    QTODO: why H5FileIOHandlerPool** self_addr is a double pointer? Why can't you just use:
-
-            void H5FileIOHandlerPool_free(struct  H5FileIOHandlerPool* self)?
+    args:
+        self_addr: address of pointer to H5FileIOHandlerPool
+    
+    we use pointer to pointer to avoid double free
 */
 void H5FileIOHandlerPool_free(struct  H5FileIOHandlerPool** self_addr){
     struct H5FileIOHandlerPool *self = *self_addr;

@@ -128,6 +128,14 @@ struct H5FileIOHandlerPool{
 */
 struct  H5FileIOHandlerPool* H5FileIOHandlerPool_init();
 
+/*
+    Clean up the pool and close any open handlers.
+
+    args:
+        self_addr: address of pointer to H5FileIOHandlerPool
+    
+    we use pointer to pointer to avoid double free
+*/
 void H5FileIOHandlerPool_free(struct  H5FileIOHandlerPool** self_addr);
 
 /*
