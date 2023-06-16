@@ -345,8 +345,17 @@ int _H5FileIOHandlerPool_get_next_free_index(struct H5FileIOHandlerPool * pool){
 /*
     Get a H5FileIOHander for a file called fn opened in IOMode mode.
     It the Handler does not exists create one.
-    If it is already in the pool return the adress from the pool.
-    If it is already in the pool but opened under a different mode return NULL!
+    If it is already in the pool return the address from the pool.
+    If it is already in the pool but opened under a different mode return
+    or when there is not enough memory for a new FileHandler return NULL!
+    args:
+        self: pointer to pool
+        fn: name of the file to be opened or created
+        mode: wether to create a new file, open a file for reading or open a file for editing
+    return:
+        pointer to new Handler if the file is not already in the pool
+        pointer to existing Handler if the file is already in the pool under the same IOMode
+        NULL if the file is in the pool under a different IOMode or when creating the Handler fails
 */
 struct H5FileIOHandler* H5FileIOHandlerPool_get_handler(struct H5FileIOHandlerPool *self, char *fn, IOMode mode){
     // check if handler already exists
@@ -367,13 +376,14 @@ struct H5FileIOHandler* H5FileIOHandlerPool_get_handler(struct H5FileIOHandlerPo
     index = _H5FileIOHandlerPool_get_next_free_index(self);
     if(index < 0){
         // make the pool bigger
-        self->handlers = realloc(self->handlers, (self->poolsize+POOLINCREMENT)*sizeof(*self->handlers));
-        // QTODO: * handle scenario when realloc fails
-        //        * I opted for the
-        //                  p = malloc(... sizeof(*p))
-        //          pattern, as it works all the time and you have
-        //          smaller chance getting a structure of a wrong
-        //          size.
+        struct H5FileIOHandler **tmp;
+        tmp = realloc(self->handlers, (self->poolsize+POOLINCREMENT)*sizeof(*self->handlers));
+        if(NULL == tmp){
+            return NULL;
+        }
+        else{
+            self->handlers = tmp;
+        }
         for(int i = 0; i < POOLINCREMENT; i++){
             self->handlers[self->poolsize+i]=NULL;
         }
