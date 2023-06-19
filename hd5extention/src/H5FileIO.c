@@ -183,6 +183,10 @@ void H5FileIOHandler_free(struct H5FileIOHandler **self_addr){
         SUCESS if it worked else a nonzero enum value
  */
 ErrorCode H5FileIOHandler_read_array(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols){
+    // failure if file is opened in write mode
+    if (self->mode == W || self->mode == X){
+        return WRONG_IO_MODE;
+    }
     // failure if dataset with dataset_name does not exist
     struct H5DatasetHandler *dataset = H5DatasetHandler_init(dataset_name, self->file_id);
     ErrorCode err;
@@ -212,6 +216,10 @@ ErrorCode H5FileIOHandler_read_array(struct H5FileIOHandler *self, const char *d
         SUCESS if it worked else a nonzero enum value
  */
 ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, hsize_t chunk_size, hid_t disk_datatype){
+    // failure if file is opened in read mode
+    if (self->mode == R){
+        return WRONG_IO_MODE;
+    }
     struct H5DatasetHandler *dataset = H5DatasetHandler_init(dataset_name, self->file_id);
     ErrorCode err;
     err = H5DatasetHandler_write_array( dataset, data,  nrows,  ncols, disk_datatype, chunk_size);
@@ -237,10 +245,11 @@ ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *
         out_column_names: pointer to array of column names
     return:
         SUCESS if it worked else a nonzero enum value
-    TODO
-        - check if self in in read mode if not return a non success errorcode
  */
 ErrorCode H5FileIOHandler_read_table(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols, char*** out_column_names){
+    if (self->mode == W || self->mode == X){
+        return WRONG_IO_MODE;
+    }
     struct H5TableHandler *table = H5TableHandler_init(dataset_name, self->file_id);
     ErrorCode err = H5TableHandler_read_table(table);
     if(SUCCESS == err){
@@ -267,6 +276,10 @@ ErrorCode H5FileIOHandler_read_table(struct H5FileIOHandler *self, const char *d
         SUCESS if it worked else a nonzero enum value
  */
 ErrorCode H5FileIOHandler_write_table(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, const char** columns_names, hsize_t chunk_size){
+    // failure if file is opened in read mode
+    if (self->mode == R){
+        return WRONG_IO_MODE;
+    }
     struct H5TableHandler *table = H5TableHandler_init(dataset_name, self->file_id);
     ErrorCode err;
     err = H5TableHandler_write_table( table, data,  nrows,  ncols, columns_names, chunk_size);

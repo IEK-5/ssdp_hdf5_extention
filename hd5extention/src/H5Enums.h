@@ -11,6 +11,7 @@ typedef enum {
     SUCCESS = 0,
     OUTOFMEMORY = 1,
     FAILURE = -1,
+    WRONG_IO_MODE = -2,
     // add others with different negative values
 } ErrorCode;
 

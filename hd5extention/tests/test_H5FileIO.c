@@ -1,3 +1,4 @@
+#include <H5Tpublic.h>
 #include <hdf5.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -334,7 +335,60 @@ Test(H5FileIO, read_table_does_not_exists){
     H5FileIOHandler_free(&handler);
 }
 
+Test(H5FileIO, test_read_write_array_IO_MODE_A){
+    double *read_data;
+    int read_nrows;
+    int read_ncols;
+    struct H5FileIOHandler* handler;
+    ErrorCode err;
 
+
+    tempfile = make_tempfile(TESTTEMPFILES,false);
+    // write some data
+    handler = H5FileIOHandler_init(tempfile, X);
+    data = make_data(nrows, ncols);
+    err = H5FileIOHandler_write_array(handler, "d1", data, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
+    cr_assert(SUCCESS == err, "Related file: %s\n",tempfile);
+    H5FileIOHandler_free(&handler);
+    
+    handler = H5FileIOHandler_init(tempfile, A);
+    err = H5FileIOHandler_write_array(handler, "d2", data, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
+    cr_assert(SUCCESS == err, "Related file: %s\n",tempfile);
+    err = H5FileIOHandler_read_array(handler, "d1", &read_data, &read_ncols, &read_nrows);
+    cr_assert(SUCCESS == err, "Related file: %s\n",tempfile);
+    for(int i = 0; i < ncols*nrows; i++){
+        cr_assert(eq(dbl,data[i],read_data[i]), "Mismatch in element %d: written:%lf read:%ls");
+    }
+    H5FileIOHandler_free(&handler);
+}
+
+Test(H5FileIO, test_read_write_table_IO_MODE_A){
+    double *read_data;
+    int read_nrows;
+    int read_ncols;
+    struct H5FileIOHandler* handler;
+    char **read_columnnames;
+    ErrorCode err;
+
+
+    tempfile = make_tempfile(TESTTEMPFILES,false);
+    // write some data
+    handler = H5FileIOHandler_init(tempfile, X);
+    data = make_data(nrows, ncols);
+    err = H5FileIOHandler_write_table(handler, "d1", data, nrows, ncols, columns_names, 1);
+    cr_assert(SUCCESS == err, "Related file: %s\n",tempfile);
+    H5FileIOHandler_free(&handler);
+    
+    handler = H5FileIOHandler_init(tempfile, A);
+    err = H5FileIOHandler_write_table(handler, "d2", data, nrows, ncols, columns_names, 1);
+    cr_assert(SUCCESS == err, "Related file: %s\n",tempfile);
+    err = H5FileIOHandler_read_table(handler, "d1", &read_data, &read_ncols, &read_nrows, &read_columnnames);
+    cr_assert(SUCCESS == err, "Related file: %s\n",tempfile);
+    for(int i = 0; i < ncols*nrows; i++){
+        cr_assert(eq(dbl,data[i],read_data[i]), "Mismatch in element %d: written:%lf read:%ls");
+    }
+    H5FileIOHandler_free(&handler);
+}
 
 /* This is necessary on windows, as BoxFort needs the main to be exported
    in order to find it. */

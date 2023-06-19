@@ -68,10 +68,12 @@ ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* da
         H5Pclose(dataspace_create_props);
         return FAILURE;
     }
-    
+    // TODO
+    // https://docs.hdfgroup.org/hdf5/develop/group___h5_d.html#ga98f44998b67587662af8b0d8a0a75906
+    // we should change this function or make a new function to be able to write partial/loose arrays into a single dataset
     status  = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
     H5Dclose(dataset_id);
-    H5Sclose(dataspace_id); // todo is it ok to close it here already?
+    H5Sclose(dataspace_id);
     H5Pclose(dataspace_create_props);
     if (0 > status){
         return FAILURE;
@@ -90,10 +92,6 @@ ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* da
         SUCESS if operation worked otherwise an enum with a nonzero value
 */
 ErrorCode H5DatasetHandler_read_array(struct H5DatasetHandler *self){
-    /*
-        todos
-    */
-
     ErrorCode return_val = SUCCESS;
     hid_t dataspace_id, dataset_id;
     herr_t status;
@@ -134,7 +132,7 @@ ErrorCode H5DatasetHandler_read_array(struct H5DatasetHandler *self){
         goto error;
     }
 
-    // todo create array out_data and fill from h5 file
+    
     status = H5Dread(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, self->read_data);
 
     if(status < 0){

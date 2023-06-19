@@ -5,15 +5,18 @@
 #include <hdf5.h>
 #include "H5Enums.h"
 
+/*
+    This struct holds the necessary infos needed to
+    read and write HDF5 Datasets
+
+    attributes:
+        read_nrows: contains the number of rows of the dataset if it had been read
+        read_ncols: contains the number of columns of the dataset if it had been read
+        name: name of the dataset as a path within the HDF5 File e.g. dir1/subdir2/Dataset1
+        loc: id of the of the group to which the dataset belongs.
+
+*/
 struct H5DatasetHandler{
-    /* 
-        TODO
-        checkout how to do 16 bit float and use it instead of uint16_t
-        float16 offers more flexibility e.g. also store coordinates in radians
-        make datatype and digits optional -> Enum?
-        main datatypes 16, 32 and 64 bit
-    */
-    time_t t;
     hsize_t read_nrows;
     hsize_t read_ncols;
     double *read_data;
