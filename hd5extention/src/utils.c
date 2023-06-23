@@ -25,9 +25,9 @@ void make_dir(const char* path){
     if (stat(path, &st) == -1) {
         mkdir(path, 0700);
     }
-    else{
-        fprintf(stderr, "Could not create directory under %s\n", path);
-    }
+    //else{
+    //    fprintf(stderr, "Could not create directory under %s\n", path);
+    //}
 }
 
 /*
@@ -63,7 +63,7 @@ char* concat(const char *s1, const char *s2)
     return result;
 }
 
-int recursive_delete(const char *dir)
+int recursive_delete(const char *dir, bool verbose)
 {
     int ret = 0;
     FTS *ftsp = NULL;
@@ -81,7 +81,8 @@ int recursive_delete(const char *dir)
     // FTS_XDEV     - Don't cross filesystem boundaries
     ftsp = fts_open(files, FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, NULL);
     if (!ftsp) {
-        fprintf(stderr, "%s: fts_open failed: %s\n", dir, strerror(errno));
+        if(verbose)
+            fprintf(stderr, "%s: fts_open failed: %s\n", dir, strerror(errno));
         ret = -1;
         goto finish;
     }
@@ -91,7 +92,8 @@ int recursive_delete(const char *dir)
         case FTS_NS:
         case FTS_DNR:
         case FTS_ERR:
-            fprintf(stderr, "%s: fts_read error: %s\n",
+            if(verbose)
+                fprintf(stderr, "%s: fts_read error: %s\n",
                     curr->fts_accpath, strerror(curr->fts_errno));
             break;
 
@@ -113,8 +115,9 @@ int recursive_delete(const char *dir)
         case FTS_SLNONE:
         case FTS_DEFAULT:
             if (remove(curr->fts_accpath) < 0) {
-                fprintf(stderr, "%s: Failed to remove: %s\n",
-                        curr->fts_path, strerror(curr->fts_errno));
+                if(verbose)
+                    fprintf(stderr, "%s: Failed to remove: %s\n",
+                            curr->fts_path, strerror(curr->fts_errno));
                 ret = -1;
             }
             break;

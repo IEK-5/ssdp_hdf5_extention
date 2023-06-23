@@ -251,6 +251,6 @@ DLLEXPORT int main(int argc, char *argv[]) {
         criterion runs test in parallel
         to avoid race conditions clean up shared ressources after the tests are run
     */
-    recursive_delete(TESTTEMPFILES);
+    recursive_delete(TESTTEMPFILES, false);
     return result;   
 }

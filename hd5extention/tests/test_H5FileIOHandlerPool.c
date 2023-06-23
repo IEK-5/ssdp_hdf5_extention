@@ -226,7 +226,7 @@ DLLEXPORT int main(int argc, char *argv[]) {
         to avoid race conditions create sgared ressoures prior to the tests running
     */
     srand(time(NULL));
-    recursive_delete(TESTDIR);
+    recursive_delete(TESTDIR, false);
     make_dir(TESTDIRROOT);
     make_dir(TESTDIR);
 

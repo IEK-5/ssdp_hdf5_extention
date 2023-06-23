@@ -8,6 +8,6 @@ char* concat(const char *s1, const char *s2);
 
 void make_dir(const char* path);
 
-int recursive_delete(const char *dir);
+int recursive_delete(const char *dir, bool verbose);
 
 char * make_tempfile(const char *dir, bool create);

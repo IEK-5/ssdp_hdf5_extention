@@ -1,5 +1,6 @@
 #include <H5Tpublic.h>
 #include <hdf5.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <criterion/criterion.h>
@@ -448,7 +449,7 @@ DLLEXPORT int main(int argc, char *argv[]) {
         to avoid race conditions create sgared ressoures prior to the tests running
     */
     srand(17);
-    recursive_delete(TESTTEMPFILES);
+    recursive_delete(TESTTEMPFILES, false);
     make_dir(TESTTEMPFILES);
 
     struct criterion_test_set *tests = criterion_initialize();
