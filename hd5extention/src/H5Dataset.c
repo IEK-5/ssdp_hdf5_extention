@@ -35,7 +35,7 @@ struct H5DatasetHandler* H5DatasetHandler_init(const char *name, hid_t loc){
     Write a continuous 1d array of doubles which is interpreted as a matrix into a HDF5 file using the H5DatasetHandler helper struct
     args:
         self: Handler object created by H5DatasetHandler_init
-        data: pointer to array of doubles
+        data: pointer to contiguous array of doubles
         nrows: rows of matrix
         ncols: columns of matrix
         disk_datatype: HDF5 Datatype to save the data on the disk
@@ -72,6 +72,100 @@ ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* da
     // https://docs.hdfgroup.org/hdf5/develop/group___h5_d.html#ga98f44998b67587662af8b0d8a0a75906
     // we should change this function or make a new function to be able to write partial/loose arrays into a single dataset
     status  = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+    H5Dclose(dataset_id);
+    H5Sclose(dataspace_id);
+    H5Pclose(dataspace_create_props);
+    if (0 > status){
+        return FAILURE;
+    }
+    else{
+        return SUCCESS;
+    }
+}
+/*
+    Write a column into a datset
+    args:
+        dataset_id: identifier of dataset to write to
+        dataspace_id: identifier of dataspace belonging to dataset_id. It must be of shape nrows x ncols
+        col_idx: index of column. 0 <= col_idx < ncols
+        nrows: number of rows in the dataset
+        column: array of length nrows
+    return:
+        0 if successful else a negative value
+*/
+static herr_t _write_column_to_dataset(hid_t dataset_id, hid_t dataspace_id, int col_idx, int nrows, double *column){
+    herr_t status = -1;
+    hid_t hyperslab_dataspace_id = H5Screate_simple(2,(hsize_t []){nrows, 1},NULL);
+    if (H5I_INVALID_HID == hyperslab_dataspace_id){
+        return -1;
+    }
+    const hsize_t start[2] = {0, col_idx};
+    const hsize_t stride[2] = {1, 1};
+    const hsize_t count[2] = {nrows, 1};
+    const hsize_t block[2] = {1, 1};
+    status = H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, start, stride, count, block);
+    if(status < 0){
+        printf("Error creating hyperslab\n");
+        goto error;
+    }
+    printf("\n");
+    status  = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, hyperslab_dataspace_id, dataspace_id, H5P_DEFAULT, column);
+    if(status < 0){
+        printf("Error writing hyperslab\n");
+        goto error;
+    }
+    status = H5Sselect_none(dataspace_id);
+    if(status < 0){
+        printf("Error undoing selection hyperslab\n");
+        goto error;
+    }
+error:
+    H5Sclose(hyperslab_dataspace_id);
+    return status;
+}
+
+/*
+    Write a 2D array of doubles which which is stored as an array of pointers to columns to a hd5 file in as a data set named dataset_name.
+    args:
+        self: Handler object created by H5DatasetHandler_init
+        data: array of double * elements of data must point to contiguous memory
+        nrows: rows of matrix, size of the contiguous arrays
+        ncols: columns of matrix, size of the array of pointers
+        disk_datatype: HDF5 Datatype to save the data on the disk
+        chunk_size: number of rows making up a chunk for IO purposes
+    return:
+        SUCESS if operation worked otherwise an enum with a nonzero value
+*/ 
+ErrorCode H5DatasetHandler_write_array_of_columns(struct H5DatasetHandler *self, double** data, int nrows, int ncols, hid_t disk_datatype, hsize_t chunk_size){
+    /*
+        TODOs:
+            check if the values are in the correct range to fit into a 16 bit int
+            add chunksize argument 
+    */
+    hsize_t dims[2];
+    herr_t status = -1;
+    dims[0]=nrows;
+    dims[1]=ncols;
+    hid_t dataspace_id, dataset_id;
+    hid_t dataspace_create_props, dataspace_access_props;
+    dataspace_id = H5Screate_simple(2,dims,NULL);
+    if(H5I_INVALID_HID == dataspace_id){
+        return FAILURE;
+    }
+    const hsize_t chunk_dims[2] = {chunk_size,ncols};
+    dataspace_create_props = H5P_create_dataset_proplist(2, chunk_dims);
+    dataspace_access_props = H5P_create_16_MB_Chunk_Cache_access_dataset_proplist();
+    dataset_id = H5Dcreate(self->loc, self->name, disk_datatype, dataspace_id, H5P_DEFAULT, dataspace_create_props, dataspace_access_props);
+    if (H5I_INVALID_HID == dataset_id){
+        H5Sclose(dataspace_id);
+        H5Pclose(dataspace_create_props);
+        return FAILURE;
+    }
+    
+    for(int col = 0; col < ncols; col++){
+        status = _write_column_to_dataset(dataset_id, dataspace_id, col,  nrows,  data[col]);
+    }   
+    
     H5Dclose(dataset_id);
     H5Sclose(dataspace_id);
     H5Pclose(dataspace_create_props);

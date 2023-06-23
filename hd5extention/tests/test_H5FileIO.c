@@ -16,16 +16,17 @@
 #include "H5FileIO.h"
 
 static const char* TESTTEMPFILES = "testfiles";
-char *tempfile;
+char *tempfile = NULL;
 int nrows = 5;
 int ncols = 3;
-double *data = NULL;
-char const ** columns_names;
+double *data_contiguous = NULL;
+double **data_array_of_columns = NULL;
+char const ** columns_names = NULL;
 static hid_t errorstack;
 H5E_auto2_t oldfunc;
-void *old_client_data;
+void *old_client_data = NULL;
 
-double * make_data(int nrows, int ncols){
+double * make_data_contiguous(int nrows, int ncols){
     /*
         Fill the array with random integer values which are smaler than UINT16_MAX/10
         in this range we do not lose any digits which makes testing easier
@@ -34,7 +35,23 @@ double * make_data(int nrows, int ncols){
     double * data = malloc(sizeof(double)*nrows*ncols);
     for(int i = 0; i<nrows; i++){
         for(int j = 0; j<ncols; j++){
-            data[i*ncols+j]=i*ncols+j;//(rand())%(UINT16_MAX/10);
+            data[i*ncols+j]=i*ncols+j;
+        }
+    }
+    return data;
+}
+
+double ** make_data_array_of_columns(int nrows, int ncols){
+    /*
+        Fill the array with random integer values which are smaler than UINT16_MAX/10
+        in this range we do not lose any digits which makes testing easier
+    */
+    
+    double ** data = malloc(sizeof(double)*ncols*sizeof(double*));
+    for(int i = 0; i<ncols; i++){
+        data[i] = malloc(sizeof(double *)*nrows);
+        for(int j = 0; j<nrows; j++){
+            data[i][j]=i%ncols+j*ncols;
         }
     }
     return data;
@@ -54,7 +71,8 @@ void suitesetup(){
     // turn of errorhandling
     H5Eset_auto2(errorstack, NULL, NULL);
     
-    data = make_data(nrows, ncols);
+    data_contiguous = make_data_contiguous(nrows, ncols);
+    data_array_of_columns = make_data_array_of_columns(nrows, ncols);
     columns_names = malloc(sizeof(char *)*3);
     columns_names[0] = "A";
     columns_names[1] = "B";
@@ -68,7 +86,11 @@ void suiteteardown(){
         it is independend
         for each test and can be run concurrently
     */
-    free(data);
+    free(data_contiguous);
+    for(int i = 0; i < ncols; i++){
+        free(data_array_of_columns[i]);
+    }
+    free(data_array_of_columns);
     free(columns_names);
     free(tempfile);
 }
@@ -158,7 +180,7 @@ Test(H5FileIO, init_W_exists){
 Test(H5FileIO, write_array_dataset_does_not_exist){
     tempfile = make_tempfile(TESTTEMPFILES,true);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, W);
-    ErrorCode err = H5FileIOHandler_write_array(handler, "some_data", data, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
+    ErrorCode err = H5FileIOHandler_write_array(handler, "some_data", data_contiguous, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
     cr_assert(SUCCESS == err, "Writing array failed %s", ErrorCode_to_string(err));
     H5FileIOHandler_free(&handler);
 }
@@ -166,9 +188,9 @@ Test(H5FileIO, write_array_dataset_does_not_exist){
 Test(H5FileIO, write_array_dataset_does_exist){
     tempfile = make_tempfile(TESTTEMPFILES,true);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, W);
-    ErrorCode err = H5FileIOHandler_write_array(handler, "some_data", data, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
+    ErrorCode err = H5FileIOHandler_write_array(handler, "some_data", data_contiguous, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
     cr_assert(SUCCESS == err, "Writing array failed %s", ErrorCode_to_string(err));
-    err = H5FileIOHandler_write_array(handler, "some_data", data, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
+    err = H5FileIOHandler_write_array(handler, "some_data", data_contiguous, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
     cr_assert(SUCCESS != err, "Writing array worked but it should not %s", ErrorCode_to_string(err));
     H5FileIOHandler_free(&handler);
 }
@@ -176,7 +198,7 @@ Test(H5FileIO, write_array_dataset_does_exist){
 Test(H5FileIO, write_table_dataset_does_not_exist){
     tempfile = make_tempfile(TESTTEMPFILES,true);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, W);
-    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names, 1);
+    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data_contiguous, nrows, ncols, columns_names, 1);
     cr_assert(SUCCESS == err, "Writing table failed %s", ErrorCode_to_string(err));
     H5FileIOHandler_free(&handler);
 }
@@ -184,8 +206,8 @@ Test(H5FileIO, write_table_dataset_does_not_exist){
 Test(H5FileIO, write_table_dataset_does_exist){
     tempfile = make_tempfile(TESTTEMPFILES,true);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, W);
-    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names, 1);
-    err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names, 1);
+    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data_contiguous, nrows, ncols, columns_names, 1);
+    err = H5FileIOHandler_write_table(handler, "some_data", data_contiguous, nrows, ncols, columns_names, 1);
     cr_assert(SUCCESS != err, "Writing table failed %s", ErrorCode_to_string(err));
     H5FileIOHandler_free(&handler);
 }
@@ -197,8 +219,7 @@ Test(H5FileIO, init_W_overwrites){
 
     tempfile = make_tempfile(TESTTEMPFILES,true);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, W);
-    data = make_data(nrows, ncols);
-    ErrorCode err = H5FileIOHandler_write_array(handler, "some_data", data, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
+    ErrorCode err = H5FileIOHandler_write_array(handler, "some_data", data_contiguous, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
     H5FileIOHandler_free(&handler);
 
     // test if dataset is still in file
@@ -214,8 +235,7 @@ Test(H5FileIO, read_array_exists){
     
     tempfile = make_tempfile(TESTTEMPFILES,true);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, W);
-    data = make_data(nrows, ncols);
-    ErrorCode err = H5FileIOHandler_write_array(handler, "some_data", data, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
+    ErrorCode err = H5FileIOHandler_write_array(handler, "some_data", data_contiguous, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
     cr_assert(SUCCESS == err, "Writing arrays failed %s", ErrorCode_to_string(err));
     H5FileIOHandler_free(&handler);
     
@@ -225,7 +245,7 @@ Test(H5FileIO, read_array_exists){
     cr_assert(SUCCESS == err, "Reading array failed %s", ErrorCode_to_string(err));
     cr_assert(read_nrows == nrows, "Wrong read nrows");
     cr_assert(read_ncols == ncols, "Wrong read ncols");
-    cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols, "Data should be exactly the same");
+    cr_assert_arr_eq(read_data, data_contiguous, sizeof(double)*nrows*ncols, "Data should be exactly the same");
     H5FileIOHandler_free(&handler);
 
     handler = H5FileIOHandler_init(tempfile, A);
@@ -233,7 +253,7 @@ Test(H5FileIO, read_array_exists){
     cr_assert(SUCCESS == err, "Reading array failed %s", ErrorCode_to_string(err));
     cr_assert(read_nrows == nrows, "Wrong read nrows");
     cr_assert(read_ncols == ncols, "Wrong read ncols");
-    cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols, "Data should be exactly the same");
+    cr_assert_arr_eq(read_data, data_contiguous, sizeof(double)*nrows*ncols, "Data should be exactly the same");
     H5FileIOHandler_free(&handler);
 }
 
@@ -267,21 +287,20 @@ Test(H5FileIO, read_table_exists){
     char **read_columnnames;
     tempfile = make_tempfile(TESTTEMPFILES,false);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, X);
-    data = make_data(nrows, ncols);
-    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, nrows, ncols, columns_names, 1);
+    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data_contiguous, nrows, ncols, columns_names, 1);
     H5FileIOHandler_free(&handler);
     
     handler = H5FileIOHandler_init(tempfile, R);
    
     err = H5FileIOHandler_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
     cr_assert(SUCCESS == err, "Reading of table failed %s", ErrorCode_to_string(err));
-    cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols, "Read values are not written values");
+    cr_assert_arr_eq(read_data, data_contiguous, sizeof(double)*nrows*ncols, "Read values are not written values");
     H5FileIOHandler_free(&handler);
     
     handler = H5FileIOHandler_init(tempfile, A);
     err = H5FileIOHandler_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
     cr_assert(SUCCESS == err, "Reading of table failed %s", ErrorCode_to_string(err));
-    cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols, "Read values are not written values");
+    cr_assert_arr_eq(read_data, data_contiguous, sizeof(double)*nrows*ncols, "Read values are not written values");
     H5FileIOHandler_free(&handler);
 }
 
@@ -295,21 +314,21 @@ Test(H5FileIO, read_write_big_table){
     char **read_columnnames;
     tempfile = make_tempfile(TESTTEMPFILES,false);
     struct H5FileIOHandler* handler = H5FileIOHandler_init(tempfile, X);
-    data = make_data(big_nrows, ncols);
-    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data, big_nrows, ncols, columns_names, 1000);
+    data_contiguous = make_data_contiguous(big_nrows, ncols);
+    ErrorCode err = H5FileIOHandler_write_table(handler, "some_data", data_contiguous, big_nrows, ncols, columns_names, 1000);
     H5FileIOHandler_free(&handler);
     
     handler = H5FileIOHandler_init(tempfile, R);
    
     err = H5FileIOHandler_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
      cr_assert(SUCCESS == err, "Reading of table failed %s", ErrorCode_to_string(err));
-    cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols, "Read values are not written values");
+    cr_assert_arr_eq(read_data, data_contiguous, sizeof(double)*nrows*ncols, "Read values are not written values");
     H5FileIOHandler_free(&handler);
     
     handler = H5FileIOHandler_init(tempfile, A);
     err = H5FileIOHandler_read_table(handler, "some_data", &read_data, &read_nrows, &read_ncols, &read_columnnames);
      cr_assert(SUCCESS == err, "Reading of table failed %s", ErrorCode_to_string(err));
-    cr_assert_arr_eq(read_data, data, sizeof(double)*nrows*ncols, "Read values are not written values");
+    cr_assert_arr_eq(read_data, data_contiguous, sizeof(double)*nrows*ncols, "Read values are not written values");
     H5FileIOHandler_free(&handler);
 }
 
@@ -346,18 +365,17 @@ Test(H5FileIO, test_read_write_array_IO_MODE_A){
     tempfile = make_tempfile(TESTTEMPFILES,false);
     // write some data
     handler = H5FileIOHandler_init(tempfile, X);
-    data = make_data(nrows, ncols);
-    err = H5FileIOHandler_write_array(handler, "d1", data, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
+    err = H5FileIOHandler_write_array(handler, "d1", data_contiguous, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
     cr_assert(SUCCESS == err, "Related file: %s\n",tempfile);
     H5FileIOHandler_free(&handler);
     
     handler = H5FileIOHandler_init(tempfile, A);
-    err = H5FileIOHandler_write_array(handler, "d2", data, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
+    err = H5FileIOHandler_write_array(handler, "d2", data_contiguous, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
     cr_assert(SUCCESS == err, "Related file: %s\n",tempfile);
     err = H5FileIOHandler_read_array(handler, "d1", &read_data, &read_ncols, &read_nrows);
     cr_assert(SUCCESS == err, "Related file: %s\n",tempfile);
     for(int i = 0; i < ncols*nrows; i++){
-        cr_assert(eq(dbl,data[i],read_data[i]), "Mismatch in element %d: written:%lf read:%ls");
+        cr_assert(eq(dbl,data_contiguous[i],read_data[i]), "Mismatch in element %d: written:%lf read:%ls");
     }
     H5FileIOHandler_free(&handler);
 }
@@ -374,19 +392,38 @@ Test(H5FileIO, test_read_write_table_IO_MODE_A){
     tempfile = make_tempfile(TESTTEMPFILES,false);
     // write some data
     handler = H5FileIOHandler_init(tempfile, X);
-    data = make_data(nrows, ncols);
-    err = H5FileIOHandler_write_table(handler, "d1", data, nrows, ncols, columns_names, 1);
+    err = H5FileIOHandler_write_table(handler, "d1", data_contiguous, nrows, ncols, columns_names, 1);
     cr_assert(SUCCESS == err, "Related file: %s\n",tempfile);
     H5FileIOHandler_free(&handler);
     
     handler = H5FileIOHandler_init(tempfile, A);
-    err = H5FileIOHandler_write_table(handler, "d2", data, nrows, ncols, columns_names, 1);
+    err = H5FileIOHandler_write_table(handler, "d2", data_contiguous, nrows, ncols, columns_names, 1);
     cr_assert(SUCCESS == err, "Related file: %s\n",tempfile);
     err = H5FileIOHandler_read_table(handler, "d1", &read_data, &read_ncols, &read_nrows, &read_columnnames);
     cr_assert(SUCCESS == err, "Related file: %s\n",tempfile);
     for(int i = 0; i < ncols*nrows; i++){
-        cr_assert(eq(dbl,data[i],read_data[i]), "Mismatch in element %d: written:%lf read:%ls");
+        cr_assert(eq(dbl,data_contiguous[i],read_data[i]), "Mismatch in element %d: written:%lf read:%ls");
     }
+    H5FileIOHandler_free(&handler);
+}
+
+Test(H5FileIO, write_array_of_pointers){
+    tempfile = make_tempfile(TESTTEMPFILES,false);
+    struct H5FileIOHandler *handler = H5FileIOHandler_init(tempfile, X);
+    H5FileIOHandler_write_array(handler, "contiguous", data_contiguous, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
+    H5FileIOHandler_write_array_of_columns(handler, "array_of_pointers", data_array_of_columns, nrows, ncols, 1, H5T_NATIVE_DOUBLE);
+    H5FileIOHandler_free(&handler);
+    handler = H5FileIOHandler_init(tempfile, R);
+    double *read1, *read2;
+    int read_ncols1, read_nrows1, read_ncols2, read_nrows2;;
+    H5FileIOHandler_read_array(handler, "contiguous", &read1, &read_nrows1, &read_ncols1);
+    H5FileIOHandler_read_array(handler, "array_of_pointers", &read2, &read_nrows2, &read_ncols2);
+    cr_assert(eq(int,read_ncols1, read_ncols2), "Mismatch in number of columns! cont:%d vs arr of ptr:%d", read_ncols1, read_ncols2);
+    cr_assert(eq(int,read_nrows1, read_nrows2), "Mismatch in number of rows! cont:%d vs arr of ptr:%d", read_nrows1, read_nrows2);
+    for(int i = 0; i < ncols*nrows; i++){
+        cr_assert(eq(dbl,read1[i],read2[i]), "Mismatch in element %d: written:%lf read:%ls");
+    }
+    
     H5FileIOHandler_free(&handler);
 }
 

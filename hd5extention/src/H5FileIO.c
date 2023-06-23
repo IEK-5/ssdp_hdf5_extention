@@ -228,7 +228,32 @@ ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *
     return err;
 }
 
-
+/*
+    Write a 2D array of doubles which which is stored as an array of pointers to columns to a hd5 file in as a data set named dataset_name.
+    
+    args:
+        self: pointer created by H5FileIOHandler_init
+        dataset_name: name of the dataset in the HDF5 file
+        data: pointer pointer to data
+        nrows: number of rows of the Matrix
+        ncols: number of columns of the Matrix
+        chunk_size: number of rows making up a chunk for IO purposes
+        disk_datatype: H5 Datatype which will be saved in the file
+    return:
+        SUCESS if it worked else a nonzero enum value
+ */
+ErrorCode H5FileIOHandler_write_array_of_columns(struct H5FileIOHandler *self, const char *dataset_name, double **data, int nrows, int ncols, hsize_t chunk_size, hid_t disk_datatype){
+    // failure if file is opened in read mode
+    if (self->mode == R){
+        return WRONG_IO_MODE;
+    }
+    struct H5DatasetHandler *dataset = H5DatasetHandler_init(dataset_name, self->file_id);
+    ErrorCode err;
+    err = H5DatasetHandler_write_array_of_columns(dataset, data,  nrows,  ncols, disk_datatype, chunk_size);
+    H5DatasetHandler_free(&dataset);
+    // failure if drive is full
+    return err;
+}
 
 
 // TODO check https://docs.hdfgroup.org/hdf5/v1_14/_h5_e__u_g.html#sec_error for error handling

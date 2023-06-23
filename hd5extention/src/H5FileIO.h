@@ -103,13 +103,20 @@ ErrorCode H5FileIOHandler_read_table(struct H5FileIOHandler *self, const char *d
 ErrorCode H5FileIOHandler_write_table(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, const char** columns_names, hsize_t chunk_size);
 
 /*
-    TODO
-    - make first extention of ssdp in new branch
-    - function to add columns
-    - function to add records
-    - set type for each column maybe use basic dataset and attributes for it
-
-*/
+    Write a 2D array of doubles which which is stored as an array of pointers to columns to a hd5 file in as a data set named dataset_name.
+    
+    args:
+        self: pointer created by H5FileIOHandler_init
+        dataset_name: name of the dataset in the HDF5 file
+        data: pointer pointer to data
+        nrows: number of rows of the Matrix
+        ncols: number of columns of the Matrix
+        chunk_size: number of rows making up a chunk for IO purposes
+        disk_datatype: H5 Datatype which will be saved in the file
+    return:
+        SUCESS if it worked else a nonzero enum value
+ */
+ErrorCode H5FileIOHandler_write_array_of_columns(struct H5FileIOHandler *self, const char *dataset_name, double **data, int nrows, int ncols, hsize_t chunk_size, hid_t disk_datatype);
 
 /*
     Helper Struct to manage multiple open HDF5 Files.
