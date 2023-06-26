@@ -49,8 +49,6 @@ void H5FileIOHandler_free(struct H5FileIOHandler **self_addr);
         out_ncols: number of columns of the Matrix
     return:
         SUCESS if it worked else a nonzero enum value
-    TODO
-        - check if self in in read mode if not return a non success errorcode
  */
 ErrorCode H5FileIOHandler_read_array(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols);
 
@@ -82,8 +80,6 @@ ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *
         out_column_names: pointer to array of column names
     return:
         SUCESS if it worked else a nonzero enum value
-    TODO
-        - check if self in in read mode if not return a non success errorcode
  */
 ErrorCode H5FileIOHandler_read_table(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols, char*** out_column_names);
 
@@ -117,6 +113,20 @@ ErrorCode H5FileIOHandler_write_table(struct H5FileIOHandler *self, const char *
         SUCESS if it worked else a nonzero enum value
  */
 ErrorCode H5FileIOHandler_write_array_of_columns(struct H5FileIOHandler *self, const char *dataset_name, double **data, int nrows, int ncols, hsize_t chunk_size, hid_t disk_datatype);
+
+/*
+    Read a 2D array (Matrix) of doubles from the dataset called dataset_name from the HDF5 file.
+    This function allocates memory for it's output which must be freed by the user!
+    args:
+        self: pointer created by H5FileIOHandler_init
+        dataset_name: name of the dataset in the HDF5 file
+        out_data: address of double ** which will hold the columns as arrays of equal length
+        out_nrows: number of rows of the Matrix
+        out_ncols: number of columns of the Matrix
+    return:
+        SUCESS if it worked else a nonzero enum value
+ */
+ErrorCode H5FileIOHandler_read_array_of_columns(struct H5FileIOHandler *self, const char *dataset_name, double ***out_data, int* out_nrows, int* out_ncols);
 
 /*
     Helper Struct to manage multiple open HDF5 Files.

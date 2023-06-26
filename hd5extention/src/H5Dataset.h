@@ -12,6 +12,8 @@
     attributes:
         read_nrows: contains the number of rows of the dataset if it had been read
         read_ncols: contains the number of columns of the dataset if it had been read
+        read_data: if read_array is called this is the pointer to a nrows x ncols contiguous 1d array containing the data.
+        read_data_columns: if read_array_of_columns is called this is an array of pointers to columns read from the dataset
         name: name of the dataset as a path within the HDF5 File e.g. dir1/subdir2/Dataset1
         loc: id of the of the group to which the dataset belongs.
 
@@ -20,6 +22,7 @@ struct H5DatasetHandler{
     hsize_t read_nrows;
     hsize_t read_ncols;
     double *read_data;
+    double **read_data_columns;
     const char *name;
     hid_t loc;
 };
@@ -44,7 +47,7 @@ struct H5DatasetHandler* H5DatasetHandler_init(const char *name, hid_t loc);
         ncols: columns of matrix
         chunk_size: number of rows making up a chunk for IO purposes
     return:
-        SUCESS if operation worked otherwise an enum with a nonzero value
+        SUCCESS if operation worked otherwise an enum with a nonzero value
 */ 
 ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* data, int nrows, int ncols, hid_t disk_datatype, hsize_t chunk_size);
 
@@ -58,19 +61,29 @@ ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* da
         disk_datatype: HDF5 Datatype to save the data on the disk
         chunk_size: number of rows making up a chunk for IO purposes
     return:
-        SUCESS if operation worked otherwise an enum with a nonzero value
+        SUCCESS if operation worked otherwise an enum with a nonzero value
 */ 
 ErrorCode H5DatasetHandler_write_array_of_columns(struct H5DatasetHandler *self, double** data, int nrows, int ncols, hid_t disk_datatype, hsize_t chunk_size);
 
 /*
     Read a 2D Dataset with fixed sizes from a HDF5 file into the Handler struct
-    This function allocated memory in H5DatasetHandler->read_data which needs to be freed!
+    This function allocates memory in H5DatasetHandler->read_data which needs to be freed!
     args:
         self: pointer returned by H5DatasetHandler_init
     return:
-        SUCESS if operation worked otherwise an enum with a nonzero value
+        SUCCESS if operation worked otherwise an enum with a nonzero value
 */
 ErrorCode H5DatasetHandler_read_array(struct H5DatasetHandler *self);
+
+/*
+    Read a 2D Dataset with fixed sizes from a HDF5 file into the Handler struct
+    This function allocates memory in H5DatasetHandler->read_data_columns which needs to be freed!
+    args:
+        self: pointer returned by H5DatasetHandler_init
+    return:
+        SUCCESS if operation worked otherwise an enum with a nonzero value
+*/
+ErrorCode H5DatasetHandler_read_array_of_columns(struct H5DatasetHandler *self);
 
 /*
  * Free a handler created by H5DatasetHandler_init
