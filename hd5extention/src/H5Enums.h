@@ -1,9 +1,9 @@
 #pragma once
 typedef enum {
-    X, // create a file and fail if the file does exists
-    W, // create a file and if the file does exists overwrite it
-    A, // open an existing file in ReadWrite mode if it does not exist create it
-    R, // open an existing file in ReadOnly mode if it does not exist fail
+    IO_X, // create a file and fail if the file does exists
+    IO_W, // create a file and if the file does exists overwrite it
+    IO_A, // open an existing file in ReadWrite mode if it does not exist create it
+    IO_R, // open an existing file in ReadOnly mode if it does not exist fail
 } IOMode;
 
 // Maybe use H5E_values ?

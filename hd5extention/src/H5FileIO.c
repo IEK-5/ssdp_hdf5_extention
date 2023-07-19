@@ -112,18 +112,17 @@ struct H5FileIOHandler* H5FileIOHandler_init(const char* fn, IOMode mode){
     self->mode = mode;
     self->filename = strdup(fn);
     
-    // todo change the mode to more ususually named words
     switch(mode){
-        case X:
+        case IO_X:
             self->file_id = H5Fcreate(fn, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
             break;
-        case W:
+        case IO_W:
             self->file_id = H5Fcreate(fn, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
             break;
-        case R:
+        case IO_R:
             self->file_id = H5Fopen(fn, H5F_ACC_RDONLY, H5P_DEFAULT);
             break;
-        case A:
+        case IO_A:
             if (access(fn, F_OK) == 0) {
                 // file exists
                 self->file_id = H5Fopen(fn, H5F_ACC_RDWR, H5P_DEFAULT);
@@ -184,7 +183,7 @@ void H5FileIOHandler_free(struct H5FileIOHandler **self_addr){
  */
 ErrorCode H5FileIOHandler_read_array(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols){
     // failure if file is opened in write mode
-    if (self->mode == W || self->mode == X){
+    if (self->mode == IO_W || self->mode == IO_X){
         return WRONG_IO_MODE;
     }
     // failure if dataset with dataset_name does not exist
@@ -215,7 +214,7 @@ ErrorCode H5FileIOHandler_read_array(struct H5FileIOHandler *self, const char *d
  */
 ErrorCode H5FileIOHandler_read_array_of_columns(struct H5FileIOHandler *self, const char *dataset_name, double ***out_data, int* out_nrows, int* out_ncols){
     // failure if file is opened in write mode
-    if (self->mode == W || self->mode == X){
+    if (self->mode == IO_W || self->mode == IO_X){
         return WRONG_IO_MODE;
     }
     // failure if dataset with dataset_name does not exist
@@ -248,7 +247,7 @@ ErrorCode H5FileIOHandler_read_array_of_columns(struct H5FileIOHandler *self, co
  */
 ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, hsize_t chunk_size, hid_t disk_datatype){
     // failure if file is opened in read mode
-    if (self->mode == R){
+    if (self->mode == IO_R){
         return WRONG_IO_MODE;
     }
     struct H5DatasetHandler *dataset = H5DatasetHandler_init(dataset_name, self->file_id);
@@ -275,7 +274,7 @@ ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *
  */
 ErrorCode H5FileIOHandler_write_array_of_columns(struct H5FileIOHandler *self, const char *dataset_name, double **data, int nrows, int ncols, hsize_t chunk_size, hid_t disk_datatype){
     // failure if file is opened in read mode
-    if (self->mode == R){
+    if (self->mode == IO_R){
         return WRONG_IO_MODE;
     }
     struct H5DatasetHandler *dataset = H5DatasetHandler_init(dataset_name, self->file_id);
@@ -303,7 +302,7 @@ ErrorCode H5FileIOHandler_write_array_of_columns(struct H5FileIOHandler *self, c
         SUCESS if it worked else a nonzero enum value
  */
 ErrorCode H5FileIOHandler_read_table(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols, char*** out_column_names){
-    if (self->mode == W || self->mode == X){
+    if (self->mode == IO_W || self->mode == IO_X){
         return WRONG_IO_MODE;
     }
     struct H5TableHandler *table = H5TableHandler_init(dataset_name, self->file_id);
@@ -333,7 +332,7 @@ ErrorCode H5FileIOHandler_read_table(struct H5FileIOHandler *self, const char *d
  */
 ErrorCode H5FileIOHandler_write_table(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, const char** columns_names, hsize_t chunk_size){
     // failure if file is opened in read mode
-    if (self->mode == R){
+    if (self->mode == IO_R){
         return WRONG_IO_MODE;
     }
     struct H5TableHandler *table = H5TableHandler_init(dataset_name, self->file_id);
