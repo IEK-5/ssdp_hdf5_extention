@@ -3,6 +3,25 @@
 #include <stdlib.h>
 #include "H5Properties.h"
 
+
+hid_t H5P_create_group_proplist()
+{
+        hid_t lcpl;
+
+        if ((lcpl = H5Pcreate(H5P_LINK_CREATE)) == H5I_INVALID_HID)
+                goto fail_lcpl;
+
+        if (H5Pset_create_intermediate_group(lcpl, 1) < 0)
+            goto fail_fspace;
+
+        return lcpl;
+fail_fspace:
+        H5Pclose(lcpl);
+fail_lcpl:;
+        return lcpl;
+}
+
+
 hid_t H5P_create_dataset_proplist(int chunk_ndims, const hsize_t *chunk_dims){
     herr_t status;
     hid_t dset_create_props;

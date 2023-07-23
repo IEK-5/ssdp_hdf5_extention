@@ -13,6 +13,13 @@ hid_t H5P_create_dataset_proplist(int chunk_ndims, const hsize_t *chunk_dims);
 
 hid_t H5P_create_16_MB_Chunk_Cache_access_dataset_proplist();
 
+
+/**
+   Create group property list to automatically create groups
+ */
+hid_t H5P_create_group_proplist();
+
+
 /*
 TODO
 I do not know how to solve it right currently

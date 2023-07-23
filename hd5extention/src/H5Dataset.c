@@ -55,7 +55,7 @@ ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* da
     dims[0]=nrows;
     dims[1]=ncols;
     hid_t dataspace_id, dataset_id;
-    hid_t dataspace_create_props, dataspace_access_props;
+    hid_t dataspace_create_props, dataspace_access_props, group_create_props;
     dataspace_id = H5Screate_simple(2,dims,NULL);
     if(H5I_INVALID_HID == dataspace_id){
         return FAILURE;
@@ -63,7 +63,8 @@ ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* da
     const hsize_t chunk_dims[2] = {chunk_size,ncols};
     dataspace_create_props = H5P_create_dataset_proplist(2, chunk_dims);
     dataspace_access_props = H5P_create_16_MB_Chunk_Cache_access_dataset_proplist();
-    dataset_id = H5Dcreate(self->loc, self->name, disk_datatype, dataspace_id, H5P_DEFAULT, dataspace_create_props, dataspace_access_props);
+    group_create_props = H5P_create_group_proplist();
+    dataset_id = H5Dcreate(self->loc, self->name, disk_datatype, dataspace_id, group_create_props, dataspace_create_props, dataspace_access_props);
     if (H5I_INVALID_HID == dataset_id){
         H5Sclose(dataspace_id);
         H5Pclose(dataspace_create_props);
@@ -73,9 +74,13 @@ ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* da
     // https://docs.hdfgroup.org/hdf5/develop/group___h5_d.html#ga98f44998b67587662af8b0d8a0a75906
     // we should change this function or make a new function to be able to write partial/loose arrays into a single dataset
     status  = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+
     H5Dclose(dataset_id);
-    H5Sclose(dataspace_id);
+    H5Pclose(group_create_props);
+    H5Pclose(dataspace_access_props);
     H5Pclose(dataspace_create_props);
+    H5Sclose(dataspace_id);
+
     if (0 > status){
         return FAILURE;
     }
@@ -151,7 +156,7 @@ ErrorCode H5DatasetHandler_write_array_of_columns(struct H5DatasetHandler *self,
     dims[0]=nrows;
     dims[1]=ncols;
     hid_t dataspace_id, dataset_id;
-    hid_t dataspace_create_props, dataspace_access_props;
+    hid_t dataspace_create_props, dataspace_access_props, group_create_props;
     dataspace_id = H5Screate_simple(2,dims,NULL);
     if(H5I_INVALID_HID == dataspace_id){
         return FAILURE;
@@ -159,7 +164,8 @@ ErrorCode H5DatasetHandler_write_array_of_columns(struct H5DatasetHandler *self,
     const hsize_t chunk_dims[2] = {chunk_size,ncols};
     dataspace_create_props = H5P_create_dataset_proplist(2, chunk_dims);
     dataspace_access_props = H5P_create_16_MB_Chunk_Cache_access_dataset_proplist();
-    dataset_id = H5Dcreate(self->loc, self->name, disk_datatype, dataspace_id, H5P_DEFAULT, dataspace_create_props, dataspace_access_props);
+    group_create_props = H5P_create_group_proplist();
+    dataset_id = H5Dcreate(self->loc, self->name, disk_datatype, dataspace_id, group_create_props, dataspace_create_props, dataspace_access_props);
     if (H5I_INVALID_HID == dataset_id){
         H5Sclose(dataspace_id);
         H5Pclose(dataspace_create_props);
@@ -169,10 +175,13 @@ ErrorCode H5DatasetHandler_write_array_of_columns(struct H5DatasetHandler *self,
     for(int col = 0; col < ncols; col++){
         status = _write_column_to_dataset(dataset_id, dataspace_id, col,  nrows,  data[col]);
     }   
-    
+
     H5Dclose(dataset_id);
-    H5Sclose(dataspace_id);
+    H5Pclose(group_create_props);
+    H5Pclose(dataspace_access_props);
     H5Pclose(dataspace_create_props);
+    H5Sclose(dataspace_id);
+
     return status;
 }
 
