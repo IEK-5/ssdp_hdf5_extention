@@ -47,7 +47,11 @@ struct H5DatasetHandler* H5DatasetHandler_init(const char *name, hid_t loc){
         SUCCESS if operation worked otherwise a FAILURE
 */
 ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* data, int nrows, int ncols, hid_t disk_datatype, hsize_t chunk_size){
-        hid_t dspace, dset, dcp, dap, gcp;
+        hid_t dspace; // data space
+        hid_t dset; // dataset
+        hid_t dcp; // dataset create props
+        hid_t dap; // dataset access props
+        hid_t gcp; // create group props
         ErrorCode status = SUCCESS;
         hsize_t dims[2] = {nrows, ncols};
         const hsize_t chunk_dims[2] = {chunk_size,ncols};
@@ -165,8 +169,11 @@ ErrorCode H5DatasetHandler_write_array_of_columns(struct H5DatasetHandler *self,
           check if the values are in the correct range to fit into a 16 bit int
           add chunksize argument
         */
-
-        hid_t dspace, dset, dcp, dap, gcp;
+        hid_t dspace; // data space
+        hid_t dset; // dataset
+        hid_t dcp; // dataset create props
+        hid_t dap; // dataset access props
+        hid_t gcp; // create group props
         ErrorCode status = SUCCESS;
         hsize_t dims[2] = {nrows, ncols};
         const hsize_t chunk_dims[2] = {chunk_size,ncols};
@@ -296,7 +303,7 @@ edset:
     This function allocates memory at *out_column_address which must be freed!
 */
 static herr_t _read_column_from_dataset(hid_t dset, hid_t dspace, int col_idx, double **out_column_address){
-        hid_t hslb;
+        hid_t hslb; // hyperslab
         hsize_t dims[2], maxdims[2];
 
         // get the shape of the dataset
