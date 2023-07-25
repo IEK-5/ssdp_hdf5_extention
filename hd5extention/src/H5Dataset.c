@@ -277,7 +277,7 @@ emalloc:
 endim:
         H5Sclose(dspace);
 edspace:
-        H5Sclose(dset);
+        H5Dclose(dset);
 edset:
         return status;
 }
