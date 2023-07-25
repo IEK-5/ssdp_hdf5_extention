@@ -106,7 +106,7 @@ void suiteteardown(){
 TestSuite(H5Datatype, .init=suitesetup, .fini=suiteteardown);
 
 void write_data(char* fn, double *data, int nrows, hid_t dtype){
-    handler = H5FileIOHandler_init(fn, W);
+    handler = H5FileIOHandler_init(fn, IO_W);
     cr_assert(handler != NULL);
     err = H5FileIOHandler_write_array(handler, "some_data", data, nrows, 1, 1, dtype);
     
@@ -115,7 +115,7 @@ void write_data(char* fn, double *data, int nrows, hid_t dtype){
 }
 
 void read_data(char *fn){
-    handler = H5FileIOHandler_init(fn, R);
+    handler = H5FileIOHandler_init(fn, IO_R);
     cr_assert(handler != NULL);
     err = H5FileIOHandler_read_array(handler, "some_data", &read_doubles, &read_nrows, &read_ncols);
     cr_assert(SUCCESS == err);

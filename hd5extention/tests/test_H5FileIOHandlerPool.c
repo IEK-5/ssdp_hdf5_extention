@@ -44,13 +44,13 @@ TestSuite(H5FileIOHandlerPool, .init=suitesetup, .fini=suiteteardown);
 Test(H5FileIOHandlerPool, get_handler_twice){
     // calling twice with the same arguments get should give you a valid handler
     char *fn = make_tempfile(TESTDIR, false);
-    struct H5FileIOHandler *handler1 = H5FileIOHandlerPool_get_handler(pool, fn, A);
-    struct H5FileIOHandler *handler2 = H5FileIOHandlerPool_get_handler(pool, fn, A);
+    struct H5FileIOHandler *handler1 = H5FileIOHandlerPool_get_handler(pool, fn, IO_A);
+    struct H5FileIOHandler *handler2 = H5FileIOHandlerPool_get_handler(pool, fn, IO_A);
     cr_assert(handler1 != NULL, "Handler not created\n");
     cr_assert(handler1 == handler2, "Two different handlers created\n");
 
     // second call with different mode must result in NULL
-    struct H5FileIOHandler *handler3 = H5FileIOHandlerPool_get_handler(pool, fn, R);
+    struct H5FileIOHandler *handler3 = H5FileIOHandlerPool_get_handler(pool, fn, IO_R);
     cr_assert(handler3 == NULL, "Handler not created\n");
     free(fn);
     
@@ -79,7 +79,7 @@ Test(H5FileIOHandlerPool, get_handler_pool_full){
     for(int i = 0; i < n; i++){
         char *file = make_tempfile(TESTDIR, false);
         files[i]=file;
-        struct H5FileIOHandler* handler = H5FileIOHandlerPool_get_handler(pool, file, W);
+        struct H5FileIOHandler* handler = H5FileIOHandlerPool_get_handler(pool, file, IO_W);
         cr_assert(handler != NULL, "Handler Creation failed");
         cr_assert(write_double(handler, i) == SUCCESS);
         
@@ -89,7 +89,7 @@ Test(H5FileIOHandlerPool, get_handler_pool_full){
 
     for(int i = 0; i < n; i++){
         double *read = NULL;
-        struct H5FileIOHandler* handler = H5FileIOHandler_init(files[i], R);
+        struct H5FileIOHandler* handler = H5FileIOHandler_init(files[i], IO_R);
         ErrorCode err = read_double(handler, &read);
         cr_assert(err == SUCCESS);
         cr_assert(ieee_ulp_eq(dbl, *read, (double) i, 4), "Handler did not write data correctly");
@@ -114,7 +114,7 @@ Test(H5FileIOHandlerPool, close_file){
     // create the file
     struct H5FileIOHandler *handler1, *handler2, *handler3;
     char *file = make_tempfile(TESTDIR, false);
-    handler1 = H5FileIOHandlerPool_get_handler(pool, file, X);
+    handler1 = H5FileIOHandlerPool_get_handler(pool, file, IO_X);
     fileid1 = handler1->file_id;
     cr_assert(H5Fget_fileno(fileid1, &fileno1)>=0);
     
@@ -123,7 +123,7 @@ Test(H5FileIOHandlerPool, close_file){
     cr_assert(pool->handlers[0] == NULL);
 
     // read it once
-    handler2 = H5FileIOHandlerPool_get_handler(pool, file, R);
+    handler2 = H5FileIOHandlerPool_get_handler(pool, file, IO_R);
     fileid2 = handler2->file_id;
     cr_assert(H5Fget_fileno(fileid2, &fileno2)>=0);
     // only the first slot in the pool shoudl be used
@@ -135,7 +135,7 @@ Test(H5FileIOHandlerPool, close_file){
     H5FileIOHandlerPool_close_file(pool, file);
 
     // read again
-    handler3 = H5FileIOHandlerPool_get_handler(pool, file, R);
+    handler3 = H5FileIOHandlerPool_get_handler(pool, file, IO_R);
     fileid3 = handler3->file_id;
     cr_assert(H5Fget_fileno(fileid3, &fileno3)>=0);
     // only the first slot in the pool shoudl be used
@@ -158,7 +158,7 @@ Test(H5FileIOHandlerPool, close_all_files){
     char **files = malloc(sizeof(char*)*n);
     for(int i = 0; i < n; i++){
         char *file = make_tempfile(TESTDIR, false);
-        H5FileIOHandlerPool_get_handler(pool, file, X);
+        H5FileIOHandlerPool_get_handler(pool, file, IO_X);
         files[i]=file;
     }
     H5FileIOHandlerPool_close_all_files(pool);
@@ -185,7 +185,7 @@ Test(H5FileIOHandlerPool, get_handler_pool_gap){
     for(int i = 0; i < n; i++){
         char *file = make_tempfile(TESTDIR, false);
         files[i] = file;
-        struct H5FileIOHandler *handler = H5FileIOHandlerPool_get_handler(pool, file, X);
+        struct H5FileIOHandler *handler = H5FileIOHandlerPool_get_handler(pool, file, IO_X);
         cr_assert(handler != NULL, "Error while creating handler");
         if (i == rand_idx){
             write_double(handler, expected);
@@ -195,7 +195,7 @@ Test(H5FileIOHandlerPool, get_handler_pool_gap){
     H5FileIOHandlerPool_close_file(pool, files[rand_idx]);
     cr_assert(pool->handlers[rand_idx] == NULL, "Handler not closed!");
     
-    struct H5FileIOHandler *handler = H5FileIOHandlerPool_get_handler(pool, files[rand_idx], R);
+    struct H5FileIOHandler *handler = H5FileIOHandlerPool_get_handler(pool, files[rand_idx], IO_R);
     cr_assert(handler != NULL, "Error while creating handler");
     cr_assert(pool->handlers[rand_idx] != NULL, "No new handler created in pool");
     read_double(handler, &actual);

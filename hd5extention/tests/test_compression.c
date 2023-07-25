@@ -58,7 +58,7 @@ void write_dataset(char *filename, double *data, int nrows, int ncols, size_t ch
     ErrorCode err;
     herr_t status;
     struct H5FileIOHandler* handler;
-    handler = H5FileIOHandler_init(filename, W);
+    handler = H5FileIOHandler_init(filename, IO_W);
     hid_t small_float = H5T_define_16bit_float();
     err = H5FileIOHandler_write_array(handler, "data", data, nrows, ncols, chunk_size, small_float);
     //cr_assert(SUCCESS == err);
