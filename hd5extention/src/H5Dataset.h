@@ -70,6 +70,7 @@ ErrorCode H5DatasetHandler_write_array_of_columns(struct H5DatasetHandler *self,
     This function allocates memory in H5DatasetHandler->read_data which needs to be freed!
     args:
         self: pointer returned by H5DatasetHandler_init
+        maxncols: maximum number of columns to read
     return:
         SUCCESS if operation worked otherwise an enum with a nonzero value
 */
@@ -80,10 +81,11 @@ ErrorCode H5DatasetHandler_read_array(struct H5DatasetHandler *self);
     This function allocates memory in H5DatasetHandler->read_data_columns which needs to be freed!
     args:
         self: pointer returned by H5DatasetHandler_init
+        maxncols: maximum number of columns to read
     return:
         SUCCESS if operation worked otherwise an enum with a nonzero value
 */
-ErrorCode H5DatasetHandler_read_array_of_columns(struct H5DatasetHandler *self);
+ErrorCode H5DatasetHandler_read_array_of_columns(struct H5DatasetHandler *self, int maxncols);
 
 /*
  * Free a handler created by H5DatasetHandler_init

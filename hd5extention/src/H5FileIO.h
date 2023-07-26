@@ -123,10 +123,11 @@ ErrorCode H5FileIOHandler_write_array_of_columns(struct H5FileIOHandler *self, c
         out_data: address of double ** which will hold the columns as arrays of equal length
         out_nrows: number of rows of the Matrix
         out_ncols: number of columns of the Matrix
+        maxncols: maximum number of columns to read
     return:
         SUCESS if it worked else a nonzero enum value
  */
-ErrorCode H5FileIOHandler_read_array_of_columns(struct H5FileIOHandler *self, const char *dataset_name, double ***out_data, int* out_nrows, int* out_ncols);
+ErrorCode H5FileIOHandler_read_array_of_columns(struct H5FileIOHandler *self, const char *dataset_name, double ***out_data, int* out_nrows, int* out_ncols, int maxncols);
 
 /*
     Helper Struct to manage multiple open HDF5 Files.

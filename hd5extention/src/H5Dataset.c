@@ -353,10 +353,11 @@ emalloc:
 
     args:
         self: pointer returned by H5DatasetHandler_init
+        maxncols: maximum number of columns to read
     return:
         SUCCESS if operation worked otherwise an enum with a nonzero value
 */
-ErrorCode H5DatasetHandler_read_array_of_columns(struct H5DatasetHandler *self){
+ErrorCode H5DatasetHandler_read_array_of_columns(struct H5DatasetHandler *self, int maxncols){
         ErrorCode status = SUCCESS;
         hid_t dspace, dset;
         hsize_t dims[2], maxdims[2];
@@ -379,7 +380,7 @@ ErrorCode H5DatasetHandler_read_array_of_columns(struct H5DatasetHandler *self){
         }
 
         self->read_nrows = dims[0];
-        self->read_ncols = dims[1];
+        self->read_ncols = maxncols <= dims[1] ? maxncols : dims[1];
 
         self->read_data_columns = malloc(sizeof(*self->read_data_columns)*(self->read_ncols));
         if (NULL == self->read_data_columns){
