@@ -12,7 +12,6 @@
     attributes:
         read_nrows: contains the number of rows of the dataset if it had been read
         read_ncols: contains the number of columns of the dataset if it had been read
-        read_data: if read_array is called this is the pointer to a nrows x ncols contiguous 1d array containing the data.
         read_data_columns: if read_array_of_columns is called this is an array of pointers to columns read from the dataset
         name: name of the dataset as a path within the HDF5 File e.g. dir1/subdir2/Dataset1
         loc: id of the of the group to which the dataset belongs.

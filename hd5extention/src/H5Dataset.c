@@ -291,7 +291,7 @@ edset:
 */
 void H5DatasetHandler_free(struct H5DatasetHandler **self_addr){
     struct H5DatasetHandler *self = *self_addr;
-    free(self->name);
+    free((char*)self->name);
     free(self);
     *self_addr = NULL;
 }

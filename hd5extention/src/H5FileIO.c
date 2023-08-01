@@ -161,7 +161,7 @@ void H5FileIOHandler_free(struct H5FileIOHandler **self_addr){
     struct H5FileIOHandler *self = *self_addr;
     if (NULL != self){
         H5Fclose(self->file_id);
-	free(self->filename);
+	free((char *)self->filename);
         free(self);
         *self_addr = NULL;
     }
