@@ -23,30 +23,34 @@ char *tempfile;
 struct H5FileIOHandler* handler;
 ErrorCode err;
 time_t tc;
-double *read_doubles;
-double *written_doubles;
+double **read_doubles;
+double **written_doubles;
 int read_nrows;
 int read_ncols;
 #define S 1000
 
 
 #define MAXFRAC 1.9990234375 // (2-1/1024)
-double * RandFloatRange16(int n)
+double ** RandFloatRange16(int n)
 {
 	double exp, frac;
-	double* out = malloc(sizeof(double)*n);
+    double **out = malloc(sizeof(double*)*1);
+	double* arr = malloc(sizeof(double)*n);
+    out[0]=arr;
     for(int i = 0; i < n; i++){
         exp = (29.0*(double)rand()/(double)(RAND_MAX) - 14);
 	    frac = MAXFRAC*(2*(double)rand()/(double)(RAND_MAX)-1.0);
-        out[i] =  frac*pow(2.0,exp);
+        arr[i] =  frac*pow(2.0,exp);
 
     }
 	return out;
 }
 
-double * RandDouble(int n)
+double ** RandDouble(int n)
 {
-	double* out = malloc(sizeof(double)*n);
+	double* arr = malloc(sizeof(double)*n);
+    double **out = malloc(sizeof(double*)*1);
+    out[0] = arr;
     for(int i = 0; i < n; i++){
         // create random doubles and reject any who are infinite
         union {
@@ -58,9 +62,10 @@ double * RandDouble(int n)
             u.uc[i] = (unsigned char) rand();
             }
         } while (!isfinite(u.d));
-        out[i] = u.d;
+        arr[i] = u.d;
 
     }
+
 	return out;
 }
 
@@ -105,10 +110,10 @@ void suiteteardown(){
 
 TestSuite(H5Datatype, .init=suitesetup, .fini=suiteteardown);
 
-void write_data(char* fn, double *data, int nrows, hid_t dtype){
+void write_data(char* fn, double **data, int nrows, hid_t dtype){
     handler = H5FileIOHandler_init(fn, IO_W);
     cr_assert(handler != NULL);
-    err = H5FileIOHandler_write_array(handler, "some_data", data, nrows, 1, 1, dtype);
+    err = H5FileIOHandler_write_array_of_columns(handler, "some_data", data, nrows, 1, 1, dtype);
     
     cr_assert(SUCCESS == err);
     H5FileIOHandler_free(&handler);
@@ -117,7 +122,7 @@ void write_data(char* fn, double *data, int nrows, hid_t dtype){
 void read_data(char *fn){
     handler = H5FileIOHandler_init(fn, IO_R);
     cr_assert(handler != NULL);
-    err = H5FileIOHandler_read_array(handler, "some_data", &read_doubles, &read_nrows, &read_ncols);
+    err = H5FileIOHandler_read_array_of_columns(handler, "some_data", &read_doubles, &read_nrows, &read_ncols, 1);
     cr_assert(SUCCESS == err);
     H5FileIOHandler_free(&handler);
 }
@@ -138,17 +143,17 @@ Test(H5Datatype, float_16){
     for(int i = 0; i<S; i++)
     {   
         // 16 bit float should be accurate for these values
-        if (fabs(written_doubles[i])>MINHF){
+        if (fabs(written_doubles[0][i])>MINHF){
             // we should have full precision
-            error=fabs(read_doubles[i]/written_doubles[i]-1);
+            error=fabs(read_doubles[0][i]/written_doubles[0][i]-1);
             limit="no";
         }
         else{// approaching the limits of our float
-            error=fabs((read_doubles[i]-written_doubles[i])/MINHF);
+            error=fabs((read_doubles[0][i]-written_doubles[0][i])/MINHF);
             limit="yes";
         }
         // 3 digits are guaranteed, right?
-        cr_assert(le(dbl,error,9.765625e-04),"actual=%16lf\texpected=%16lf\tat limit=%s", read_doubles[i], written_doubles[i],limit);
+        cr_assert(le(dbl,error,9.765625e-04),"actual=%16lf\texpected=%16lf\tat limit=%s", read_doubles[0][i], written_doubles[0][i],limit);
     }
 }
 
@@ -159,7 +164,7 @@ Test(H5Datatype, double){
     read_data(tempfile);
     for(int i = 0; i<S; i++)
     {   
-        cr_assert(ieee_ulp_eq(dbl, read_doubles[i], written_doubles[i], 4));
+        cr_assert(ieee_ulp_eq(dbl, read_doubles[0][i], written_doubles[0][i], 4));
     }
 }
 
@@ -174,11 +179,13 @@ Test(H5Datatype, double_special){
         } d1, d2;
         d1.i = written_double_nans[i];
         tempfile = make_tempfile(TESTTEMPFILES, true);
-        written_doubles = malloc(sizeof(double));
-        written_doubles[0] = d1.f;
+        written_doubles = malloc(sizeof(double*));
+        written_doubles[0] = malloc(sizeof(double));
+        written_doubles[0][0] = d1.f;
         write_data(tempfile, written_doubles, 1, H5T_NATIVE_DOUBLE);
         read_data(tempfile);
-        d2.f = read_doubles[0];
+        d2.f = read_doubles[0][0];
+        free(written_doubles[0]);
         free(written_doubles);
         
         cr_assert(eq(u64, d2.i, d1.i));
@@ -193,11 +200,13 @@ void test_float_nan(uint64_t nan_value, hid_t float_type){
         } d1, d2;
     d1.i = nan_value;
     tempfile = make_tempfile(TESTTEMPFILES, true);
-    written_doubles = malloc(sizeof(double));
-    written_doubles[0] = d1.f;
+    written_doubles = malloc(sizeof(double*));
+    written_doubles[0] = malloc(sizeof(double));
+    written_doubles[0][0] = d1.f;
     write_data(tempfile, written_doubles, 1, float_type);
     read_data(tempfile);
-    d2.f = read_doubles[0];
+    d2.f = read_doubles[0][0];
+    free(written_doubles[0]);
     free(written_doubles);
     cr_assert(eq(u64, d2.i, d1.i), "actual = %#018"PRIx64"\texpected = %#018"PRIx64"\n", d2.i, d1.i);
 }

@@ -167,39 +167,6 @@ void H5FileIOHandler_free(struct H5FileIOHandler **self_addr){
     }
 }
 
-// ErrorCode H5FileIOHandler_discover_datasets(struct H5FileIOHandler *self){}
-
-/*
-    Read a 1D array of doubles which should be treated as a 2D Matrix from the dataset called dataset_name from the HDF5 file.
-    This function allocates memory for it's output which must be freed by the user!
-    args:
-        self: pointer created by H5FileIOHandler_init
-        dataset_name: name of the dataset in the HDF5 file
-        out_data: pointer output array value
-        out_nrows: number of rows of the Matrix
-        out_ncols: number of columns of the Matrix
-    return:
-        SUCESS if it worked else a nonzero enum value
- */
-ErrorCode H5FileIOHandler_read_array(struct H5FileIOHandler *self, const char *dataset_name, double **out_data, int* out_nrows, int* out_ncols){
-    // failure if file is opened in write mode
-    if (self->mode == IO_W || self->mode == IO_X){
-        return WRONG_IO_MODE;
-    }
-    // failure if dataset with dataset_name does not exist
-    struct H5DatasetHandler *dataset = H5DatasetHandler_init(dataset_name, self->file_id);
-    ErrorCode err;
-    err = H5DatasetHandler_read_array(dataset);
-    if(SUCCESS == err){
-        *out_data = dataset->read_data;
-        *out_nrows = dataset->read_nrows;
-        *out_ncols = dataset->read_ncols;
-    }
-    H5DatasetHandler_free(&dataset);
-    return err;
-
-}
-
 /*
     Read a 2D array (Matrix) of doubles from the dataset called dataset_name from the HDF5 file.
     This function allocates memory for it's output which must be freed by the user!
@@ -232,32 +199,6 @@ ErrorCode H5FileIOHandler_read_array_of_columns(struct H5FileIOHandler *self, co
 
 }
 
-/*
-    Write a 1D array of doubles which should be treated as a 2D Matrix from to a hd5 file in as a data set named dataset_name.
-    
-    args:
-        self: pointer created by H5FileIOHandler_init
-        dataset_name: name of the dataset in the HDF5 file
-        data: pointer pointer to data
-        nrows: number of rows of the Matrix
-        ncols: number of columns of the Matrix
-        chunk_size: number of rows making up a chunk for IO purposes
-        disk_datatype: H5 Datatype which will be saved in the file
-    return:
-        SUCESS if it worked else a nonzero enum value
- */
-ErrorCode H5FileIOHandler_write_array(struct H5FileIOHandler *self, const char *dataset_name, double *data, int nrows, int ncols, hsize_t chunk_size, hid_t disk_datatype){
-    // failure if file is opened in read mode
-    if (self->mode == IO_R){
-        return WRONG_IO_MODE;
-    }
-    struct H5DatasetHandler *dataset = H5DatasetHandler_init(dataset_name, self->file_id);
-    ErrorCode err;
-    err = H5DatasetHandler_write_array( dataset, data,  nrows,  ncols, disk_datatype, chunk_size);
-    H5DatasetHandler_free(&dataset);
-    // failure if drive is full
-    return err;
-}
 
 /*
     Write a 2D array of doubles which which is stored as an array of pointers to columns to a hd5 file in as a data set named dataset_name.

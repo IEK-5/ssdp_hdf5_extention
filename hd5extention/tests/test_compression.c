@@ -19,8 +19,11 @@
 #include "utils.h"
 #include "H5FileIO.h"
 
-double * make_zeros(int nrows, int ncols){
-    double * data = calloc(nrows*ncols, sizeof(double));
+double ** make_zeros(int nrows, int ncols){
+    double ** data = malloc(sizeof(double*)*ncols);
+    for(int i = 0; i < ncols; i++){
+        data[i] = calloc(nrows, sizeof(double));
+    }
     return data;
 }
 /*
@@ -54,13 +57,13 @@ Test(WriteCompressedTables,WriteZerosDifferentChunkSizes){
 }
 */
 
-void write_dataset(char *filename, double *data, int nrows, int ncols, size_t chunk_size){
+void write_dataset(char *filename, double **data, int nrows, int ncols, size_t chunk_size){
     ErrorCode err;
     herr_t status;
     struct H5FileIOHandler* handler;
     handler = H5FileIOHandler_init(filename, IO_W);
     hid_t small_float = H5T_define_16bit_float();
-    err = H5FileIOHandler_write_array(handler, "data", data, nrows, ncols, chunk_size, small_float);
+    err = H5FileIOHandler_write_array_of_columns(handler, "data", data, nrows, ncols, chunk_size, small_float);
     //cr_assert(SUCCESS == err);
     status = H5Tclose(small_float);
     //cr_assert(status >= 0);
@@ -72,7 +75,7 @@ void write_dataset(char *filename, double *data, int nrows, int ncols, size_t ch
 void create_dataset(hsize_t chunk_size){
     int nrows = 26843545;
     int ncols = 5;
-    double* data = make_zeros(nrows, ncols);
+    double** data = make_zeros(nrows, ncols);
     
     //recursive_delete("compressed_files/datasets");
     make_dir("compressed_files/datasets");
@@ -89,6 +92,9 @@ void create_dataset(hsize_t chunk_size){
         write_dataset(filename, data, nrows, ncols, chunk_size);
         CALLGRIND_TOGGLE_COLLECT;
         CALLGRIND_STOP_INSTRUMENTATION;
+    for(int i = 0; i < ncols; i++){
+        free(data[i]);
+    }
     free(data);
     //return 0;
 }

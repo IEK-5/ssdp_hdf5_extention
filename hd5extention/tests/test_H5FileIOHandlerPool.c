@@ -58,15 +58,20 @@ Test(H5FileIOHandlerPool, get_handler_twice){
 }
 
 ErrorCode write_double(struct H5FileIOHandler* handler, double val){
-    double data[] = {val};
-    return H5FileIOHandler_write_array(handler, "data", data, 1, 1, 1, H5T_NATIVE_DOUBLE);
+    double **data = malloc(sizeof(double*));
+    data[0]=malloc(sizeof(double));
+    data[0][0]=val;
+    ErrorCode out = H5FileIOHandler_write_array_of_columns(handler, "data", data, 1, 1, 1, H5T_NATIVE_DOUBLE);
+    free(data[0]);
+    free(data);
+    return out;
 }
 
-ErrorCode read_double(struct H5FileIOHandler* handler, double **val){
+ErrorCode read_double(struct H5FileIOHandler* handler, double ***val){
     
     int out_nrows;
     int out_ncols;
-    ErrorCode err = H5FileIOHandler_read_array(handler, "data", val, &out_nrows, &out_ncols);
+    ErrorCode err = H5FileIOHandler_read_array_of_columns(handler, "data", val, &out_nrows, &out_ncols, 1);
     cr_assert(out_nrows == 1, "Handler did not write data correctly: rows");
     cr_assert(out_ncols == 1, "Handler did not write data correctly: columns");
     return err;
@@ -88,11 +93,11 @@ Test(H5FileIOHandlerPool, get_handler_pool_full){
     H5FileIOHandlerPool_close_all_files(pool);
 
     for(int i = 0; i < n; i++){
-        double *read = NULL;
+        double **read = NULL;
         struct H5FileIOHandler* handler = H5FileIOHandler_init(files[i], IO_R);
         ErrorCode err = read_double(handler, &read);
         cr_assert(err == SUCCESS);
-        cr_assert(ieee_ulp_eq(dbl, *read, (double) i, 4), "Handler did not write data correctly");
+        cr_assert(ieee_ulp_eq(dbl, read[0][0], (double) i, 4), "Handler did not write data correctly");
         free(files[i]);
     }
     free(files);
@@ -105,7 +110,7 @@ Test(H5FileIOHandlerPool, close_file){
     // work as a released resource is considered valid
 
     double expected = 3.14;
-    double *actual;
+    double **actual;
     ErrorCode err;
     //fileno uniquely identify an open file see https://docs.hdfgroup.org/hdf5/develop/group___h5_f.html#ga402205688af065ab5db0fe20417d5484
     unsigned long fileno1, fileno2, fileno3;
@@ -131,7 +136,7 @@ Test(H5FileIOHandlerPool, close_file){
     cr_assert(pool->handlers[1] == NULL);
     err = read_double(handler2, &actual);
     cr_assert(err == SUCCESS);
-    cr_assert(ieee_ulp_eq(dbl, *actual, expected, 4), "Handler did not write data correctly");
+    cr_assert(ieee_ulp_eq(dbl, actual[0][0], expected, 4), "Handler did not write data correctly");
     H5FileIOHandlerPool_close_file(pool, file);
 
     // read again
@@ -143,7 +148,7 @@ Test(H5FileIOHandlerPool, close_file){
     cr_assert(pool->handlers[1] == NULL);
     err = read_double(handler3, &actual);
     cr_assert(err == SUCCESS);
-    cr_assert(ieee_ulp_eq(dbl, *actual, expected, 4), "Handler did not write data correctly");
+    cr_assert(ieee_ulp_eq(dbl, actual[0][0], expected, 4), "Handler did not write data correctly");
     H5FileIOHandlerPool_close_file(pool, file);
     free(file);
 
@@ -176,7 +181,7 @@ Test(H5FileIOHandlerPool, get_handler_pool_gap){
     char **files;
     int rand_idx;
     double expected = 17.0;
-    double *actual;
+    double **actual;
 
     n = pool->poolsize;
     files = malloc(sizeof(char*)*n);
@@ -199,7 +204,7 @@ Test(H5FileIOHandlerPool, get_handler_pool_gap){
     cr_assert(handler != NULL, "Error while creating handler");
     cr_assert(pool->handlers[rand_idx] != NULL, "No new handler created in pool");
     read_double(handler, &actual);
-    cr_assert(ieee_ulp_eq(dbl, *actual, expected, 4), "Handler did not write data correctly");
+    cr_assert(ieee_ulp_eq(dbl, actual[0][0], expected, 4), "Handler did not write data correctly");
 
     for(int i = 0; i < n; i++){
         free(files[i]);

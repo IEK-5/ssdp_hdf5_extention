@@ -25,80 +25,10 @@ struct H5DatasetHandler* H5DatasetHandler_init(const char *name, hid_t loc){
     }
     self->loc = loc;
     self->name = strdup(name);
-    self->read_data = NULL;
     self->read_ncols = -1;
     self->read_nrows = -1;
     self->read_data_columns = NULL;
     return self;
-}
-
-/**
-    Write a continuous 1d array of doubles which is interpreted as a
-    matrix into a HDF5 file using the H5DatasetHandler helper struct
-    
-    args:
-        self: Handler object created by H5DatasetHandler_init
-        data: pointer to contiguous array of doubles
-        nrows: rows of matrix
-        ncols: columns of matrix
-        disk_datatype: HDF5 Datatype to save the data on the disk
-        chunk_size: number of rows making up a chunk for IO purposes
-    return:
-        SUCCESS if operation worked otherwise a FAILURE
-*/
-ErrorCode H5DatasetHandler_write_array(struct H5DatasetHandler *self, double* data, int nrows, int ncols, hid_t disk_datatype, hsize_t chunk_size){
-        hid_t dspace; // data space
-        hid_t dset; // dataset
-        hid_t dcp; // dataset create props
-        hid_t dap; // dataset access props
-        hid_t gcp; // create group props
-        ErrorCode status = SUCCESS;
-        hsize_t dims[2] = {nrows, ncols};
-        const hsize_t chunk_dims[2] = {chunk_size,ncols};
-
-        if ((dspace = H5Screate_simple(2,dims,NULL)) == H5I_INVALID_HID) {
-                status = FAILURE;
-                goto edspace;
-        }
-
-                if ((dcp = H5P_create_dataset_proplist(2, chunk_dims)) == H5I_INVALID_HID) {
-                status = FAILURE;
-                goto edcp;
-        }
-
-        if ((dap = H5P_create_16_MB_Chunk_Cache_access_dataset_proplist()) == H5I_INVALID_HID) {
-                status = FAILURE;
-                goto edap;
-        }
-
-        if ((gcp = H5P_create_group_proplist()) == H5I_INVALID_HID) {
-                status = FAILURE;
-                goto egcp;
-        }
-
-
-        if ((dset = H5Dcreate(self->loc, self->name, disk_datatype,
-                              dspace, gcp, dcp, dap)) == H5I_INVALID_HID) {
-                status = FAILURE;
-                goto edset;
-        }
-
-        // TODO
-        // https://docs.hdfgroup.org/hdf5/develop/group___h5_d.html#ga98f44998b67587662af8b0d8a0a75906
-        // we should change this function or make a new function to be able to write partial/loose arrays into a single dataset
-        status = H5Dwrite(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-
-        H5Dclose(dset);
-edset:
-        H5Pclose(gcp);
-egcp:
-        H5Pclose(dap);
-edap:
-        H5Pclose(dcp);
-edcp:
-        H5Sclose(dspace);
-edspace:
-        return status;
 }
 
 
@@ -222,70 +152,6 @@ edap:
 edcp:
         H5Sclose(dspace);
 edspace:
-        return status;
-}
-
-
-/**
-    Read a 2D Dataset with fixed sizes from a HDF5 file into the
-    Handler struct.
-
-    This function allocated memory in H5DatasetHandler->read_data
-    which needs to be freed!
-
-    args:
-        self: pointer returned by H5DatasetHandler_init
-    return:
-        SUCCESS if operation worked otherwise an enum with a nonzero value
-*/
-ErrorCode H5DatasetHandler_read_array(struct H5DatasetHandler *self){
-        ErrorCode status = SUCCESS;
-        hid_t dspace, dset;
-        hsize_t dims[2], maxdims[2];
-
-        if ((dset = H5Dopen(self->loc, self->name, H5P_DEFAULT)) == H5I_INVALID_HID){
-                status = FAILURE;
-                goto edset;
-        }
-
-        if((dspace = H5Dget_space(dset)) == H5I_INVALID_HID){
-                status = FAILURE;
-                goto edspace;
-        }
-
-        // Find rank and retrieve current and maximum dimension sizes.
-        if (H5Sget_simple_extent_dims(dspace, dims, maxdims) < 0){
-                status = FAILURE;
-                goto endim;
-        }
-
-        self->read_nrows = dims[0];
-        self->read_ncols = dims[1];
-
-        self->read_data = malloc(sizeof(*self->read_data)*dims[0]*dims[1]);
-        if (NULL == self->read_data){
-                status = OUTOFMEMORY;
-                goto emalloc;
-        }
-
-        if(H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, self->read_data) < 0){
-                status = FAILURE;
-                goto eh5read;
-        }
-
-eh5read:
-        if (SUCCESS != status) {
-                free(self->read_data);
-                self->read_data = NULL;
-                self->read_nrows = -1;
-                self->read_ncols = -1;
-        }
-emalloc:
-endim:
-        H5Sclose(dspace);
-edspace:
-        H5Dclose(dset);
-edset:
         return status;
 }
 
