@@ -223,11 +223,11 @@ emalloc:
     return:
         SUCCESS if operation worked otherwise an enum with a nonzero value
 */
-ErrorCode H5DatasetHandler_read_array_of_columns(struct H5DatasetHandler *self, int maxncols){
+ErrorCode H5DatasetHandler_read_array_of_columns(struct H5DatasetHandler *self, hsize_t maxncols){
         ErrorCode status = SUCCESS;
         hid_t dspace, dset;
         hsize_t dims[2], maxdims[2];
-        int col_alloc = 0;
+        hsize_t col_alloc = 0;
 
         if ((dset = H5Dopen(self->loc, self->name, H5P_DEFAULT)) == H5I_INVALID_HID) {
                 status = FAILURE;
@@ -262,7 +262,7 @@ ErrorCode H5DatasetHandler_read_array_of_columns(struct H5DatasetHandler *self, 
 
 
     if (SUCCESS != status) {
-            for (int i=0; i < col_alloc; ++i)
+            for (hsize_t i=0; i < col_alloc; ++i)
                     free(self->read_data_columns[i]);
             free(self->read_data_columns);
             self->read_data_columns = NULL;

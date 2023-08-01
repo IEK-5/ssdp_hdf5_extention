@@ -60,7 +60,7 @@ ErrorCode H5DatasetHandler_write_array_of_columns(struct H5DatasetHandler *self,
     return:
         SUCCESS if operation worked otherwise an enum with a nonzero value
 */
-ErrorCode H5DatasetHandler_read_array_of_columns(struct H5DatasetHandler *self, int maxncols);
+ErrorCode H5DatasetHandler_read_array_of_columns(struct H5DatasetHandler *self, hsize_t maxncols);
 
 /*
  * Free a handler created by H5DatasetHandler_init
