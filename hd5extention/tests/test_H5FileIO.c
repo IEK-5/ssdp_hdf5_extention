@@ -443,7 +443,7 @@ Test(H5FileIO, read_array_of_columns){
     double *read_contiguous, **read_array_of_columns;
     int read_ncols1, read_nrows1, read_ncols2, read_nrows2;;
     cr_assert(H5FileIOHandler_read_array(handler, "data", &read_contiguous, &read_nrows1, &read_ncols1)==SUCCESS);
-    cr_assert(H5FileIOHandler_read_array_of_columns(handler, "data", &read_array_of_columns, &read_nrows2, &read_ncols2)==SUCCESS);
+    cr_assert(H5FileIOHandler_read_array_of_columns(handler, "data", &read_array_of_columns, &read_nrows2, &read_ncols2, ncols)==SUCCESS);
     cr_assert(eq(int,read_ncols1, read_ncols2, ncols), "Mismatch in number of columns! cont:%d vs arr of ptr:%d", read_ncols1, read_ncols2);
     cr_assert(eq(int,read_nrows1, read_nrows2, nrows), "Mismatch in number of rows! cont:%d vs arr of ptr:%d", read_nrows1, read_nrows2);
     for(int col = 0; col < ncols; col++){
