@@ -58,15 +58,11 @@ Test(WriteCompressedTables,WriteZerosDifferentChunkSizes){
 */
 
 void write_dataset(char *filename, double **data, int nrows, int ncols, size_t chunk_size){
-    ErrorCode err;
-    herr_t status;
     struct H5FileIOHandler* handler;
     handler = H5FileIOHandler_init(filename, IO_W);
     hid_t small_float = H5T_define_16bit_float();
-    err = H5FileIOHandler_write_array_of_columns(handler, "data", data, nrows, ncols, chunk_size, small_float);
-    //cr_assert(SUCCESS == err);
-    status = H5Tclose(small_float);
-    //cr_assert(status >= 0);
+    H5FileIOHandler_write_array_of_columns(handler, "data", data, nrows, ncols, chunk_size, small_float);
+    H5Tclose(small_float);
     H5FileIOHandler_free(&handler);
 }
 
@@ -83,15 +79,14 @@ void create_dataset(hsize_t chunk_size){
     char *filename = malloc(sizeof(char)*100);
     
     
-    int status;
-    status = snprintf(filename, 100, template, chunk_size);
-        //cr_assert(status > 0);
-        //cr_assert(status < 100);
-        CALLGRIND_START_INSTRUMENTATION;
-        CALLGRIND_TOGGLE_COLLECT;
-        write_dataset(filename, data, nrows, ncols, chunk_size);
-        CALLGRIND_TOGGLE_COLLECT;
-        CALLGRIND_STOP_INSTRUMENTATION;
+    snprintf(filename, 100, template, chunk_size);
+    //cr_assert(status > 0);
+    //cr_assert(status < 100);
+    CALLGRIND_START_INSTRUMENTATION;
+    CALLGRIND_TOGGLE_COLLECT;
+    write_dataset(filename, data, nrows, ncols, chunk_size);
+    CALLGRIND_TOGGLE_COLLECT;
+    CALLGRIND_STOP_INSTRUMENTATION;
     for(int i = 0; i < ncols; i++){
         free(data[i]);
     }
