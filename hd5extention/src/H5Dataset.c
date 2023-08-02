@@ -78,6 +78,12 @@ error:
 }
 
 
+int dataset_isin(struct H5DatasetHandler *self, const char *name)
+{
+        return H5Lexists(self->loc, name, H5P_DEFAULT);
+}
+
+
 /**
    Write a 2D array of doubles which which is stored as an array of
    pointers to columns to a hd5 file in as a data set named
@@ -107,6 +113,11 @@ ErrorCode H5DatasetHandler_write_array_of_columns(struct H5DatasetHandler *self,
         ErrorCode status = SUCCESS;
         hsize_t dims[2] = {nrows, ncols};
         const hsize_t chunk_dims[2] = {chunk_size,ncols};
+
+        if (dataset_isin(self, self->name) > 0) {
+                status = DATASET_EXISTS;
+                goto edexists;
+        }
 
         if ((dspace = H5Screate_simple(2,dims,NULL)) == H5I_INVALID_HID) {
                 status = FAILURE;
@@ -152,6 +163,7 @@ edap:
 edcp:
         H5Sclose(dspace);
 edspace:
+edexists:
         return status;
 }
 

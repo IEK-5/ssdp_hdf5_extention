@@ -36,6 +36,13 @@ struct H5DatasetHandler{
 */
 struct H5DatasetHandler* H5DatasetHandler_init(const char *name, hid_t loc);
 
+
+/** Check if dataset already exists
+
+    returns zero if dataset is not inside
+ */
+int dataset_isin(struct H5DatasetHandler *self, const char *name);
+
 /*
     Write a 2D array of doubles which which is stored as an array of pointers to columns to a hd5 file in as a data set named dataset_name.
     args:
