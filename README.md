@@ -1,166 +1,351 @@
 # SSDP HDF5 Extention
 
-## Concept
+This is a library developed to be used in conjunction with [SSDP](https://github.com/IEK-5/ssdp) to allow input and output via the [HDF5 file format](https://www.hdfgroup.org/solutions/hdf5/). It can also be used independently from SSDP hence it is its own project. The main aim of this library is to provide an easier access to some IO features of HDF5.
 
-This repo is a playground for implementing HDF5 in C for a later feature to be included in SSDP.
+## Project Status
 
-## Setup
+This library is still being actively developed. 
 
-Here I use [Devenv](https://devenv.sh/getting-started/#initial-set-up) to manage the dependencies.
-I also use [Direnv](https://direnv.net/docs/hook.html) to automatically start up the env.
-The file `devenv.nix` contains the dependencies. The file `devenv.yaml`configures inputs and imports that means it tells us from where we get our imports.
+## Table of Contents
+
+1. [Installation](#Installation)
+2. [Usage](#Usage)
+3. [Features](#Features)
+4. [Code Examples](#Code-Examples)
+5. [Development](#Development)
+6. [License](#License)
+7. [Troubleshooting and FAQs](#FAQs)
+8. [Contact Information](#Contact-Information)
+
+## Installation
+
+For installing and developing this project is configured to use [Devenv](https://devenv.sh/getting-started/#initial-set-up) to manage the dependencies combined with [Direnv](https://direnv.net/docs/hook.html) to automatically start up the development environment. Both tools are configured using the files: `devenenv.nix`, `devenenv.yaml`, `devenenv.lock` and `.envrc`.
+
+The file `devenv.nix` contains the dependencies. The file `devenv.yaml`configures inputs and imports.
 The files `devenv.lock` is created from the nix and yaml files. It pins the inputs making the environment reproducible.
 The `.envrc` file tells direnv it should actviate the env.
 
-## About HDF5
+For installation without [Devenv](https://devenv.sh/getting-started/#initial-set-up) the following dependencies are needed:
 
-- it's a flexible data format capable of storing data and metadata of various kinds in a space efficient way
-- it can be thought of a database 
+1. gcc or clang C or another C compiler compatible with HDF5's `h5cc` wrapper script.
+2. [GNU make](https://www.gnu.org/software/make/)
+3. [HDF5-1.14.0 or higher](https://www.hdfgroup.org/downloads/hdf5)
+4. [Zlib](https://www.zlib.net/)
+5. [Criterion Test Framework](https://criterion.readthedocs.io/en/master/intro.html)
 
-### Data Model
+To build the software navigate to the folder `hd5extention` and call:
 
-- a HDF5 file if a container / database of heterogenous data objects (datasets)
-- examples of datasets are: images, tables, graphs, binary documents such as PDF and Excel or other files
-- the main data objects are groups and datasets
-- other data objects are datatypes, dataspaces, properties and attributes
+```
+make
+```
 
-### Groups
+or
 
-- organize data objects
-- can be thought of as directories from linux
-- each hdf5 file has a root group `/`
-- each file may contain groups within groups (all groups live at least within root)
-- data objects may live in multiple groups (hard links in multiple dirs to the same file/inode)
+```
+make all
+```
 
-### Datasets
+This will create all objects files in a folder `obj` and a statically linked library file in a folder `lib`.
 
-- organize and contain "raw" data as well as metadata
-- bascially an n-dimensional array of fixed or with unlimited (extentible) size with metadata
-- meta data is a dataspace which tells us the dimensions, the datatype, attributes and properties
 
-### Datastpace
+To compile and run the tests call:
 
-- describes the layout of the dataset's data elements (the shape of the array)#
-- two roles
-    - logical layout: rank and dimensions
-    - describes the data buffers for I/O e.g. subset/index of dataset ( e.g. 2x2 subset of a 10x10 matrix)
+```
+make tests
+```
 
-### Properties
+To just compile tests call:
 
-- characteristics or features of HDF5 object
-- `interfaces` in oo language
-- HDF5 Property List API
-- examples
-    1. contiguous: elements are adjacent to each other in memory
-    2. chunked: only data within subsets is adjacent in memory -> faster acess
-    3. chunked & compressed: like chunked but less storage on disk
+```
+make testscompile
+```
 
-### Attributes
+*NOTE*: This software has only been compiled and tested under: Archlinux, Ubuntu 20.04 LTS and Fedora.
 
-- key value pairs attached to an object -> not independant
-- used for metadata
-- also habe datatype and dataspace but do not support partial I/O and can not be compressed or extended
+To remove all files created by `make` call:
 
-### Datatypes
+```
+make clean
+```
+## Usage
 
-- describe datatype of data in a dataset
+This library uses struct and helper functions for said struct to make the usage of HDF5 easier.
 
-#### pre-defined
+Most use cases can be covered by the structs and functions in `H5FileIO.h` and the enums in `H5Enums.h`.
 
-- hdf5 works with these "under the hood"
-- 2 types
-    - standard, which are all the same independent of platform, nomenclature: `H5T_ARCH_BASE` e.g. `H5T_IEEE_F32BE` floating point big endian
-    - native, not the same on different platforms e.g. `H5T_NATIVE_INT` integer in C
 
-#### derived
+`H5FileIO.h` has a central struct called `H5FileIOHandler`. It provides functions to read datasets from HDF5 Files (and tables WIP) into
+C arrays and write C arrays into datasets. There exists also a struct called `H5FileIOHandlerPool` which eases the creation and management of multiple `H5FileIOHandler` structs. Each struct in this library has an `<structname>_init` and `<structname>_free` function used for creating and freeing instances of the struct respectively.
 
-- created or derived (idk whats the difference) from pre-defined
-- examples are strings (multiples chars) or combound e.g. int16+char+int32+2x3x2 array of float32 (you can combine whatever however you want I think)
-- compound datatypes can consist of ther compound types
-- compound types can be stored in arrays (dataspaces) just like pre-defined types
+`H5Enums.h` provides two important enums: `IOMode` and `ErrorCode`. `IOMode` is used to determin how a HDF5 file should be opened. `ErrorCode` is used as a return value for many functions in this library.
 
-## SSDP IO
+Each function has a doc string. In section [Code Examples](#Code-Examples) you also find example which help understand how to use this library.
 
-- filename, double **array, columns, rows
-- ssdp does know only 1d arrays
-- columns of csvs are up to the user to be assigned to names and internally treated as 1d arrays
-- ssdp uses double for everything
 
-### arrayparser.c
+## Features
 
-- make WriteArraysToHD5 function similar to WriteArraysToFile with a docstring which generates stuff for ssdp language
+- Creation and reading of HDF5 Files
+- Creation and reading of datasets. See `H5FileIOHander_[write|read]_array_of_columns`.
+    - Datasets are created using chunked IO, N-Bit Filter and gzip compression
+- Creation and reading of tables. See `H5FileIOHander_[write|read]_table` **WIP**.
+- Management of multiple HDF5 Files using `H5FileIOHanderPool`.
+- Creation of n-bit-floating point datatypes using `H5T_define_nbit_float` in `H5Datatypes.h`
+- Configuration of Chunk-Cache (TODO see `H5P_create_16_MB_Chunk_Cache_access_dataset_proplist` in `H5Properties.h`)
 
-## Goals
 
-- first version is just hdf version of output to ascii
-- second version is to give columns names
+## Code Examples
 
-- later versions in order of priority
-    - configurable datatypes
-    - hdf5 output simulation script and input files and implement routine to to resume/run simulation from ssdp output hdf5 files
+### Writing data into an HDF5 file
+This program creates a file called `myfile.h5` and writes a $3 \times 3$ array into a dataset called "dataset1".
 
-## How to develop and debug
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <hdf5.h>
+#include "H5FileIO.h"
+#include "H5Enums.h"
 
-- use valgrind to find leaks
-- c debugger gdb
-- speichern anlegen mit malloc, calloc und realloc
-- compile with `-g` for debugging with valgrind
-- pointers mit null initialisieren und bei free wieder auf null setzen und auf null abfragen
-- macros mit "hacks" wie malloc return prüfen oder free und auf null setzen
-- learn CI für C language
-- maybe make debug makefile
-- use valgrind especially when there is segfault
+# define COLS 3
+# define ROWS 3
 
-### Tables
+int main(void){
+    ErrorCode err;
+    int retval = 0;
+    double **myArray;
+    
+    // create a handler
+    // IO_W means write and if exists overwrite
+    struct H5FileIOHandler *handler = H5FileIOHandler_init("myfile.h5", IO_W);
 
-- research what is HDF5 Table
-- find out which kind of objects are columns
-
-struct hdfio {
-    hid_t fd;
-    char mode;
-};
-
-struct *hdfio hdfio_init(char* fn, char mode, char **cols)
-{
-    struct hdfio *self;
-    self = malloc(sizeo(*self));
-    if (NULL == self)
-        goto eself;
-    self->mode = mode;
-    // copy self-> cols;
-    if ('w' == mode) {
-        self->fd = 
-        if (self->fd failed)
-            goto efd;
+    // if init fails it returns NULL
+    if (NULL == handler){
+        printf("Couldn't create handler\n");
+        return -1;
     }
 
-    return self;
-efd:
-    free(self);
-eself:
-    return NULL;
+    /*
+    0 3 6
+    1 4 7
+    2 5 8
+    */
+    // arrays must be dynamically allocated!
+    // outer array contains pointers to columns
+    // columns are 1d arrays
+    myArray = malloc(sizeof(*myArray)*COLS);
+    for(int i = 0; i < COLS; i++){
+        myArray[i]=malloc(sizeof(**myArray)*ROWS);
+        for(int j = 0; j < ROWS; j++){
+            myArray[i][j]=i*ROWS+j;
+        }
+    }
+
+    // write array
+    err = H5FileIOHandler_write_array_of_columns(handler, "dataset1",
+            myArray, ROWS, COLS, 1, H5T_NATIVE_DOUBLE);
+    
+    // test for SUCCESS
+    if (SUCCESS != err){
+        printf("Error while writing array: ErrorCode %s\n", ErrorCode_to_string(err));
+        retval = -1;
+    }
+    // release handler
+    H5FileIOHandler_free(&handler);
+
+    // cleanup array
+    for(int i = 0; i < COLS; i++){
+        free(myArray[i]);
+    }
+    free(myArray);
+    return retval;
+    
+}
+```
+### Reading data from an HDF5 file
+
+This program assume there exists a file `myfile.h5` created by the previous program. The file contains a dataset called `dataset1`. It is being read into a C array.
+
+```
+#include <stdio.h>
+#include <stdlib.h>
+#include <hdf5.h>
+#include "H5FileIO.h"
+#include "H5Enums.h"
+
+#define MAXNCOLS 100
+
+int main(void){
+    ErrorCode err;
+    int retval = 0;
+    double **myArray = NULL;
+    int ncols = -1, nrows = -1;
+    // create a handler
+    // IO_R means read only
+    struct H5FileIOHandler *handler = H5FileIOHandler_init("myfile.h5", IO_R);
+
+    // if init fails it returns NULL
+    if (NULL == handler){
+        printf("Couldn't create handler\n");
+        return -1;
+    }
+
+
+    // read array
+    // pass the adress of myArray!
+    // myArray now get's filled and must be freed!
+    err = H5FileIOHandler_read_array_of_columns(handler, "dataset1",
+            &myArray, &nrows, &ncols, MAXNCOLS);
+    
+    // test for SUCCESS
+    if (SUCCESS != err){
+        printf("Error while reading array: ErrorCode %s\n", ErrorCode_to_string(err));
+        retval = -1;
+    }
+    // release handler
+    H5FileIOHandler_free(&handler);
+
+    if (NULL != myArray){
+        // print array
+        for(int i = 0; i < ncols; i++){
+            for(int j = 0; j < nrows; j++){
+                printf("%lf\t",myArray[i][j]);
+            }
+            printf("\n");
+        }
+        // cleanup array
+        for(int i = 0; i < ncols; i++){
+            free(myArray[i]);
+        }
+        free(myArray);
+        }
+    return retval;
+}
+```
+
+### Handling multiple HDF5 Files
+
+Suppose you have a program in which you need to work on multiple files.
+You need to write and read multiple datasets from multiple files.
+To make your life easier use `H5FileIOHandlerPool` to not worry about
+opening and closing each handler manually.
+
+```
+#include <H5Tpublic.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <hdf5.h>
+#include "H5FileIO.h"
+#include "H5Enums.h"
+
+# define MAXNCOLS 100
+
+struct _Helper{
+    char *filename;
+    char *dataset_in;
+    char *dataset_out;
+    int chunksize;
+};
+
+struct _Helper get_userinput(void);
+
+/*
+Perform some important calculation inplace.
+*/
+void some_important_calculation(double ***array_of_columns, int nrows, int ncols);
+
+void free_data(double **data, int ncols){
+    for(int i = 0; i < ncols; i++){
+        free(data[i]);
+    }
+    free(data);
 }
 
-void hdfio_free(struct hdfio *self)
-{
-    // hdf_close(fd);
-    // free cols
-    free(self);
-    self = NULL;
+/*
+    This function parses the user input
+    to:
+    1. read a dataset
+    2. perform some important calculation
+    3. save the result of the calculation in another dataset
+
+*/
+void process_file(struct H5FileIOHandlerPool *pool){
+    ErrorCode err;
+    struct _Helper h;
+    struct H5FileIOHandler *handler;
+     double **data = NULL;
+    int nrows = -1, ncols = -1;
+
+
+    h = get_userinput();
+    // IO_A means read write
+    handler = H5FileIOHandlerPool_get_handler(pool, h.filename, IO_A);
+    if (NULL != handler){
+        err = H5FileIOHandler_read_array_of_columns(handler, h.dataset_in, &data, &nrows, &ncols, MAXNCOLS);
+        if (SUCCESS == err){
+            some_important_calculation(&data, nrows, ncols);
+            H5FileIOHandler_write_array_of_columns(handler, h.dataset_out, data, nrows, ncols, h.chunksize, H5T_NATIVE_DOUBLE);
+        }
+        free_data(data, ncols);
+    }
 }
 
-int hdfio_readarray(struct hdfio *self, int Ncols, double **df, int *nrow)
-{
+int main(void){
+    
+    struct H5FileIOHandlerPool *pool = H5FileIOHandlerPool_init();
+    if(NULL == pool){
+        printf("Coulnd't initiate pool");
+        return -1;
+    }
+    
+    char input;
+
+    while (1) {
+        printf("Type C to continue, F to flush or Q to quit: ");
+        scanf(" %c", &input);
+
+        if (input == 'C' || input == 'c') {
+            process_file(pool);
+        } else if (input == 'F' || input == 'f') {
+            H5FileIOHandlerPool_close_all_files(pool);
+        } else if (input == 'Q' || input == 'q') {
+            printf("Terminating...\n");
+            break;
+        } else {
+            printf("Invalid input. Please try again.\n");
+        }
+    }
+
+    
+
+    H5FileIOHandlerPool_free(&pool);
 
 }
+```
 
-void test()
-{
-    struct hdfio* dh = hdfio_init("test.hdf5", 'w');
-    if (NULL == dh)
-             goto edf;
+## Development
 
-edf:
-    hdfio_free(dh);
-}
+The following conventions and techniques are used:
+
+- Functions and structs which wrap HDF5 start with H5
+- Struct have an `_init` and `_free` function
+- `_free` function accepts **adresses of pointers** to set the underlying pointer to `NULL`
+- `ErrorCode` enum is used for return values
+- features should be tested using criterion test framework in a file in the `tests` folder starting with the following naming convention `test_<name>.c`
+- If a test creates files they should be located in `tests/testfiles` to be cleaned up by make.
+- Most user API functions and structs should be in `H5FileIO.h`, library internal functions and structs such as `H5DatasetHandler` should not be there.
+- If the creation/configuration of a HDF5 file requires code which creates ressourced identitied by `hid_t` it's usually a good idea to seperate it into different functions and files, e.g see `H5Proteries.h`, `H5Dataset.h`, `H5Datatype.h`.
+- Use goto and tags to avoid memory leaks e.g. see `H5DatasetHandler_write_array_of_columns`.
+
+### Roadmap
+In no particular order.
+
+- Finish implementation of H5Table, to be compatible with array of columns
+- Implement automatic determination of optimal chunk-cache based on chunk size
+
+## License
+
+## Troubleshooting and FAQs
+
+## Contact Information
+[Michael Gordon, Forschungszentrum Jülich GmbH, IEK-5](m.gordon@fz-juelich.de)
+[Dr. Evgenii Sovetkin, Forschungszentrum Jülich GmbH, IEK-5](e.sovetkin@fz-juelich.de)
+
